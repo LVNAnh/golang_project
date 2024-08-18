@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"Golang_project/Models"
+	"Server/Models"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"

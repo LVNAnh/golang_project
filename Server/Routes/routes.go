@@ -1,7 +1,7 @@
 package Routes
 
 import (
-	"Golang_project/Controllers"
+	"Server/Controllers"
 
 	"github.com/gorilla/mux"
 )
