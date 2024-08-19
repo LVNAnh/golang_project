@@ -37,7 +37,7 @@ function LoginForm({ setUser }) {
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Email</label>
+          <label className="form-label">Emailssss</label>
           <input
             type="email"
             className="form-control"
