@@ -8,7 +8,6 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const [avatar, setAvatar] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -26,7 +25,6 @@ function RegisterForm() {
           password,
           phone,
           address,
-          avatar,
         }),
       });
 
@@ -104,15 +102,6 @@ function RegisterForm() {
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Avatar</label>
-          <input
-            type="text"
-            className="form-control"
-            value={avatar}
-            onChange={(e) => setAvatar(e.target.value)}
           />
         </div>
         <button type="submit" className="btn btn-primary">
