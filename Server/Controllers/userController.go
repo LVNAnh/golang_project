@@ -3,7 +3,6 @@ package Controllers
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -13,35 +12,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var Client *mongo.Client
-
-func InitMongoClient() *mongo.Client {
-	// Sử dụng mongo.Connect để tạo và kết nối client trong một bước
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Kiểm tra kết nối
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatal("Could not connect to MongoDB: ", err)
-	}
-
-	return client
-}
+// Database là đối tượng database đã được gán từ main.go
+var Database *mongo.Database
 
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	var user Models.User
-	json.NewDecoder(r.Body).Decode(&user)
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 
 	// Kiểm tra độ dài mật khẩu
 	if len(user.Password) < 8 {
@@ -53,7 +35,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	user.Password = string(hash)
 
 	// Đảm bảo email và phone là duy nhất
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -71,6 +53,9 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Set role mặc định là 2 (Customer)
+	user.Role = Models.Customer
+
 	result, _ := collection.InsertOne(ctx, user)
 	json.NewEncoder(w).Encode(result)
 }
@@ -78,9 +63,12 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 func LoginUser(w http.ResponseWriter, r *http.Request) {
 	var user Models.User
 	var dbUser Models.User
-	json.NewDecoder(r.Body).Decode(&user)
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -96,12 +84,28 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(dbUser)
+	// Trả về cả role
+	response := struct {
+		ID        primitive.ObjectID `json:"id"`
+		FirstName string             `json:"firstname"`
+		LastName  string             `json:"lastname"`
+		Email     string             `json:"email"`
+		Role      Models.Role        `json:"role"`
+	}{
+		ID:        dbUser.ID,
+		FirstName: dbUser.FirstName,
+		LastName:  dbUser.LastName,
+		Email:     dbUser.Email,
+		Role:      dbUser.Role,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	var users []Models.User
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -114,7 +118,10 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 	for cursor.Next(ctx) {
 		var user Models.User
-		cursor.Decode(&user)
+		if err := cursor.Decode(&user); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		users = append(users, user)
 	}
 
@@ -136,7 +143,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 
 	var user Models.User
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -166,9 +173,12 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 
 	var user Models.User
-	json.NewDecoder(r.Body).Decode(&user)
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
 
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -198,7 +208,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, _ := primitive.ObjectIDFromHex(params["id"])
 
-	collection := Client.Database("golang_project").Collection("users")
+	collection := Database.Collection("users")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 

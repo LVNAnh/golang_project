@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 function LoginForm({ setUser }) {
   const [email, setEmail] = useState("");
@@ -19,8 +19,8 @@ function LoginForm({ setUser }) {
 
       if (response.ok) {
         const userData = await response.json();
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData)); // Lưu trữ thông tin người dùng
+        setUser(userData); // Lưu thông tin người dùng vào state
         navigate("/");
       } else {
         const errorData = await response.json();
@@ -37,7 +37,7 @@ function LoginForm({ setUser }) {
       {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
-          <label className="form-label">Emailssss</label>
+          <label className="form-label">Email</label>
           <input
             type="email"
             className="form-control"
@@ -60,6 +60,13 @@ function LoginForm({ setUser }) {
           Đăng nhập
         </button>
       </form>
+
+      <div className="mt-3">
+        Bạn chưa có tài khoản?{" "}
+        <Link to="/register" className="text-primary">
+          Đăng ký ngay!
+        </Link>
+      </div>
     </div>
   );
 }
