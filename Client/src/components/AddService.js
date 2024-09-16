@@ -24,70 +24,71 @@ import {
 } from "@mui/material";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
-const PRODUCTS_PER_PAGE = 20;
+const SERVICES_PER_PAGE = 20;
 
-function AddProduct() {
-  const [products, setProducts] = useState([]);
-  const [productCategories, setProductCategories] = useState([]);
+function AddService() {
+  const [services, setServices] = useState([]); // Always initialize as an empty array
+  const [serviceCategories, setServiceCategories] = useState([]); // Always initialize as an empty array
   const [showDialog, setShowDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     price: "",
-    stock: "",
-    productcategory: "",
+    description: "",
+    servicecategory: "",
     image: null,
   });
-  const [editProductId, setEditProductId] = useState(null);
+  const [editServiceId, setEditServiceId] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [deleteProductId, setDeleteProductId] = useState(null);
+  const [deleteServiceId, setDeleteServiceId] = useState(null);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filteredServices, setFilteredServices] = useState([]);
 
-  const fetchProducts = async () => {
+  const fetchServices = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/products");
-      setProducts(response.data);
+      const response = await axios.get("http://localhost:8080/services");
+      setServices(response.data || []); // Ensure the value is an array even if null
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching services:", error);
+      setServices([]); // Fallback to empty array in case of an error
     }
   };
 
-  const fetchProductCategories = async () => {
+  const fetchServiceCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/productcategories"
+        "http://localhost:8080/servicecategories"
       );
-      setProductCategories(response.data || []);
+      setServiceCategories(response.data || []); // Ensure it's an array
     } catch (error) {
-      console.error("Error fetching product categories:", error);
-      setProductCategories([]);
+      console.error("Error fetching service categories:", error);
+      setServiceCategories([]); // Fallback to empty array
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-    fetchProductCategories();
+    fetchServices();
+    fetchServiceCategories();
   }, []);
 
   useEffect(() => {
     handleFilterAndSort();
-  }, [products, selectedCategory, sortOrder, currentPage]);
+  }, [services, selectedCategory, sortOrder, currentPage]);
 
   const handleFilterAndSort = () => {
-    let filtered = products;
+    let filtered = services;
 
     if (selectedCategory) {
       filtered = filtered.filter(
-        (product) => product.productcategory === selectedCategory
+        (service) => service.servicecategory === selectedCategory
       );
     }
 
@@ -97,30 +98,30 @@ function AddProduct() {
       filtered = filtered.sort((a, b) => b.price - a.price);
     }
 
-    setFilteredProducts(filtered);
+    setFilteredServices(filtered);
   };
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
   };
 
-  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
+  const totalPages = Math.ceil(filteredServices.length / SERVICES_PER_PAGE);
 
-  const displayedProducts = filteredProducts.slice(
-    (currentPage - 1) * PRODUCTS_PER_PAGE,
-    currentPage * PRODUCTS_PER_PAGE
+  const displayedServices = filteredServices.slice(
+    (currentPage - 1) * SERVICES_PER_PAGE,
+    currentPage * SERVICES_PER_PAGE
   );
 
-  const handleAddProduct = async () => {
+  const handleAddService = async () => {
     if (
       !formData.name ||
       !formData.price ||
-      !formData.stock ||
-      !formData.productcategory
+      !formData.description ||
+      !formData.servicecategory
     ) {
       setSnackbar({
         open: true,
-        message: "Vui lòng điền đầy đủ thông tin sản phẩm.",
+        message: "Vui lòng điền đầy đủ thông tin dịch vụ.",
         severity: "error",
       });
       return;
@@ -129,56 +130,51 @@ function AddProduct() {
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.name);
     formDataToSend.append("price", formData.price);
-    formDataToSend.append("stock", formData.stock);
-    formDataToSend.append("productcategory", formData.productcategory);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("servicecategory", formData.servicecategory);
     if (formData.image) {
       formDataToSend.append("image", formData.image);
     }
 
     try {
-      await axios.post(
-        "http://localhost:8080/product",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axios.post("http://localhost:8080/service", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       setSnackbar({
         open: true,
-        message: "Sản phẩm đã được thêm!",
+        message: "Dịch vụ đã được thêm!",
         severity: "success",
       });
-      fetchProducts();
+      fetchServices();
       setShowDialog(false);
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Có lỗi xảy ra khi thêm sản phẩm.",
+        message: "Có lỗi xảy ra khi thêm dịch vụ.",
         severity: "error",
       });
       console.error(
-        "Error adding product:",
+        "Error adding service:",
         error.response ? error.response.data : error.message
       );
     }
   };
 
-  // Hàm cập nhật sản phẩm
-  const handleUpdateProduct = async () => {
+  const handleUpdateService = async () => {
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.name);
     formDataToSend.append("price", formData.price);
-    formDataToSend.append("stock", formData.stock);
-    formDataToSend.append("productcategory", formData.productcategory);
+    formDataToSend.append("description", formData.description);
+    formDataToSend.append("servicecategory", formData.servicecategory);
     if (formData.image) {
       formDataToSend.append("image", formData.image);
     }
 
     try {
       await axios.put(
-        `http://localhost:8080/product/${editProductId}`,
+        `http://localhost:8080/service/${editServiceId}`,
         formDataToSend,
         {
           headers: {
@@ -188,52 +184,52 @@ function AddProduct() {
       );
       setSnackbar({
         open: true,
-        message: "Sản phẩm đã được cập nhật!",
+        message: "Dịch vụ đã được cập nhật!",
         severity: "success",
       });
-      fetchProducts();
+      fetchServices();
       setShowDialog(false);
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Có lỗi xảy ra khi cập nhật sản phẩm.",
+        message: "Có lỗi xảy ra khi cập nhật dịch vụ.",
         severity: "error",
       });
     }
   };
 
-  const handleEdit = (product) => {
+  const handleEdit = (service) => {
     setFormData({
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
-      productcategory: product.productcategory,
+      name: service.name,
+      price: service.price,
+      description: service.description,
+      servicecategory: service.servicecategory,
       image: null,
     });
-    setEditProductId(product.id);
+    setEditServiceId(service.id);
     setEditMode(true);
     setShowDialog(true);
   };
 
-  const handleDelete = async (productId) => {
-    setDeleteProductId(productId);
+  const handleDelete = async (serviceId) => {
+    setDeleteServiceId(serviceId);
     setShowConfirmDialog(true);
   };
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8080/product/${deleteProductId}`);
+      await axios.delete(`http://localhost:8080/service/${deleteServiceId}`);
       setSnackbar({
         open: true,
-        message: "Sản phẩm đã được xóa!",
+        message: "Dịch vụ đã được xóa!",
         severity: "success",
       });
-      fetchProducts();
+      fetchServices();
       setShowConfirmDialog(false);
     } catch (error) {
       setSnackbar({
         open: true,
-        message: "Có lỗi xảy ra khi xóa sản phẩm.",
+        message: "Có lỗi xảy ra khi xóa dịch vụ.",
         severity: "error",
       });
     }
@@ -243,8 +239,8 @@ function AddProduct() {
     setFormData({
       name: "",
       price: "",
-      stock: "",
-      productcategory: "",
+      description: "",
+      servicecategory: "",
       image: null,
     });
     setEditMode(false);
@@ -259,7 +255,7 @@ function AddProduct() {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: name === "price" || name === "stock" ? parseFloat(value) : value,
+      [name]: name === "price" ? parseFloat(value) : value,
     });
   };
 
@@ -273,17 +269,26 @@ function AddProduct() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editMode) {
-      handleUpdateProduct();
+      handleUpdateService();
     } else {
-      handleAddProduct();
+      handleAddService();
     }
   };
 
   return (
     <div>
-      <h2>Quản lý sản phẩm</h2>
+      <h2>Quản lý dịch vụ</h2>
 
-      {/* Bộ lọc và sắp xếp */}
+      {/* Thêm button để mở Dialog thêm dịch vụ */}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => setShowDialog(true)} // Khi click sẽ mở dialog thêm dịch vụ
+        style={{ marginBottom: "20px" }}
+      >
+        Thêm Dịch Vụ
+      </Button>
+
       <div style={{ marginBottom: "20px", display: "flex", gap: "20px" }}>
         <FormControl style={{ minWidth: 200 }}>
           <InputLabel id="filter-category-label">Lọc theo danh mục</InputLabel>
@@ -293,7 +298,7 @@ function AddProduct() {
             onChange={(e) => setSelectedCategory(e.target.value)}
           >
             <MenuItem value="">Tất cả danh mục</MenuItem>
-            {productCategories.map((category) => (
+            {serviceCategories.map((category) => (
               <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
@@ -314,70 +319,76 @@ function AddProduct() {
         </FormControl>
       </div>
 
-      {/* Bảng sản phẩm */}
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>STT</TableCell>
-              <TableCell>Tên sản phẩm</TableCell>
+              <TableCell>Tên dịch vụ</TableCell>
               <TableCell>Giá</TableCell>
-              <TableCell>Kho</TableCell>
-              <TableCell>Danh mục sản phẩm</TableCell>
-              <TableCell>Ảnh sản phẩm</TableCell>
+              <TableCell>Mô tả</TableCell>
+              <TableCell>Danh mục dịch vụ</TableCell>
+              <TableCell>Ảnh dịch vụ</TableCell>
               <TableCell>Thao tác</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedProducts.map((product, index) => {
-              const category = productCategories.find(
-                (cat) => cat.id === product.productcategory
-              );
+            {displayedServices.length > 0 ? (
+              displayedServices.map((service, index) => {
+                const category = serviceCategories.find(
+                  (cat) => cat.id === service.servicecategory
+                );
 
-              return (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    {(currentPage - 1) * PRODUCTS_PER_PAGE + index + 1}
-                  </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell>{product.price}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    {category ? category.name : "Danh mục không tồn tại"}
-                  </TableCell>
-                  <TableCell>
-                    {product.imageurl ? (
-                      <img
-                        src={`http://localhost:8080/${product.imageurl}`}
-                        alt={product.name}
-                        width="50"
-                      />
-                    ) : (
-                      "Không có ảnh"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      color="primary"
-                      onClick={() => handleEdit(product)}
-                    >
-                      <FaEdit />
-                    </IconButton>
-                    <IconButton
-                      color="secondary"
-                      onClick={() => handleDelete(product.id)}
-                    >
-                      <FaTrash />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                return (
+                  <TableRow key={service.id}>
+                    <TableCell>
+                      {(currentPage - 1) * SERVICES_PER_PAGE + index + 1}
+                    </TableCell>
+                    <TableCell>{service.name}</TableCell>
+                    <TableCell>{service.price}</TableCell>
+                    <TableCell>{service.description}</TableCell>
+                    <TableCell>
+                      {category ? category.name : "Danh mục không tồn tại"}
+                    </TableCell>
+                    <TableCell>
+                      {service.imageurl ? (
+                        <img
+                          src={`http://localhost:8080/${service.imageurl}`}
+                          alt={service.name}
+                          width="50"
+                        />
+                      ) : (
+                        "Không có ảnh"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        onClick={() => handleEdit(service)}
+                      >
+                        <FaEdit />
+                      </IconButton>
+                      <IconButton
+                        color="secondary"
+                        onClick={() => handleDelete(service.id)}
+                      >
+                        <FaTrash />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} align="center">
+                  Không có dịch vụ nào
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>
 
-      {/* Phân trang */}
       {totalPages > 1 && (
         <Pagination
           count={totalPages}
@@ -393,16 +404,15 @@ function AddProduct() {
         />
       )}
 
-      {/* Dialog thêm/cập nhật sản phẩm */}
       <Dialog open={showDialog} onClose={handleCloseDialog}>
         <DialogTitle>
-          {editMode ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
+          {editMode ? "Cập nhật dịch vụ" : "Thêm dịch vụ"}
         </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             margin="dense"
-            label="Tên sản phẩm"
+            label="Tên dịch vụ"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -420,31 +430,31 @@ function AddProduct() {
           />
           <TextField
             margin="dense"
-            label="Số lượng"
-            name="stock"
-            value={formData.stock}
+            label="Mô tả"
+            name="description"
+            value={formData.description}
             onChange={handleChange}
             fullWidth
             required
+            multiline
           />
-          <InputLabel id="productcategory-label">Danh mục sản phẩm</InputLabel>
+          <InputLabel id="servicecategory-label">Danh mục dịch vụ</InputLabel>
           <Select
-            labelId="productcategory-label"
-            name="productcategory"
-            value={formData.productcategory}
+            labelId="servicecategory-label"
+            name="servicecategory"
+            value={formData.servicecategory}
             onChange={handleChange}
             fullWidth
           >
-            {productCategories.map((category) => (
+            {serviceCategories.map((category) => (
               <MenuItem key={category.id} value={category.id}>
                 {category.name}
               </MenuItem>
             ))}
           </Select>
 
-          {/* Input để chọn ảnh */}
           <InputLabel style={{ marginTop: "10px" }}>
-            Hình ảnh sản phẩm
+            Hình ảnh dịch vụ
           </InputLabel>
           <input type="file" accept="image/*" onChange={handleFileChange} />
         </DialogContent>
@@ -458,14 +468,13 @@ function AddProduct() {
         </DialogActions>
       </Dialog>
 
-      {/* Confirm delete dialog */}
       <Dialog
         open={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
       >
         <DialogTitle>Xác nhận</DialogTitle>
         <DialogContent>
-          Bạn có chắc chắn muốn xóa sản phẩm này không?
+          Bạn có chắc chắn muốn xóa dịch vụ này không?
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowConfirmDialog(false)} color="secondary">
@@ -477,7 +486,6 @@ function AddProduct() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
@@ -491,4 +499,4 @@ function AddProduct() {
   );
 }
 
-export default AddProduct;
+export default AddService;

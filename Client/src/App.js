@@ -10,6 +10,8 @@ import RegisterForm from "./components/RegisterForm";
 import LoginForm from "./components/LoginForm";
 import AddProductCategory from "./components/AddProductCategory";
 import AddProduct from "./components/AddProduct";
+import AddServiceCategory from "./components/AddServiceCategory"; // Import the AddServiceCategory component
+import AddService from "./components/AddService";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
   AppBar,
@@ -160,6 +162,11 @@ function App() {
                   element={<AddProductCategory />}
                 />
                 <Route path="/add-product" element={<AddProduct />} />
+                <Route
+                  path="/add-service-category"
+                  element={<AddServiceCategory />}
+                />
+                <Route path="/add-service" element={<AddService/>}/>
               </>
             ) : (
               <Route path="*" element={<Navigate to="/" />} />

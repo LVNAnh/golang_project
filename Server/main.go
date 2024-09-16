@@ -45,6 +45,10 @@ func main() {
 	// Thiết lập các route
 	router := Routes.SetupRoutes()
 
+	// Cấu hình để phục vụ các file tĩnh từ thư mục 'uploads'
+	// Cần cấu hình trước các route API
+	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+
 	// Cấu hình CORS
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:6969"},                   // Thay bằng URL frontend

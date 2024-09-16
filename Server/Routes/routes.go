@@ -31,5 +31,19 @@ func SetupRoutes() *mux.Router {
 	router.HandleFunc("/product/{id}", Controllers.UpdateProduct).Methods("PUT")
 	router.HandleFunc("/product/{id}", Controllers.DeleteProduct).Methods("DELETE")
 
+	// ServiceCategory routes
+	router.HandleFunc("/servicecategories", Controllers.GetAllServiceCategories).Methods("GET")
+	router.HandleFunc("/servicecategory/{id}", Controllers.GetServiceCategoryByID).Methods("GET")
+	router.HandleFunc("/servicecategory", Controllers.CreateServiceCategory).Methods("POST")
+	router.HandleFunc("/servicecategory/{id}", Controllers.UpdateServiceCategory).Methods("PUT")
+	router.HandleFunc("/servicecategory/{id}", Controllers.DeleteServiceCategory).Methods("DELETE")
+
+	// Service routes
+	router.HandleFunc("/services", Controllers.GetAllServices).Methods("GET")
+	router.HandleFunc("/service/{id}", Controllers.GetServiceByID).Methods("GET")
+	router.HandleFunc("/service", Controllers.CreateService).Methods("POST")
+	router.HandleFunc("/service/{id}", Controllers.UpdateService).Methods("PUT")
+	router.HandleFunc("/service/{id}", Controllers.DeleteService).Methods("DELETE")
+
 	return router
 }

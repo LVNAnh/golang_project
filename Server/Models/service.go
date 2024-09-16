@@ -4,11 +4,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Product struct {
+type Service struct {
 	ID              primitive.ObjectID `bson:"_id,omitempty" json:"id"`
 	Name            string             `bson:"name" json:"name"`
 	Price           float64            `bson:"price" json:"price"`
-	Stock           int                `bson:"stock" json:"stock"`
-	ProductCategory primitive.ObjectID `bson:"productcategory" json:"productcategory"` // Reference to ProductCategory
+	Description     string             `bson:"description" json:"description"`
+	ServiceCategory primitive.ObjectID `bson:"servicecategory" json:"servicecategory"` // Reference to ServiceCategory
 	ImageURL        string             `bson:"imageurl" json:"imageurl"`               // Store image URL or path
 }
