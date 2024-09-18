@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"Server/Middleware"
 	"Server/Models"
 
 	"github.com/gorilla/mux"
@@ -19,6 +20,15 @@ import (
 // Create a new product
 // CreateProduct handles adding a new product
 func CreateProduct(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền tạo sản phẩm (Admin hoặc Staff)
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "You are not authorized to create products", http.StatusForbidden)
+		return
+	}
+
 	var product Models.Product
 
 	// Parse multipart form
@@ -57,7 +67,6 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Lưu đường dẫn tương đối tới hình ảnh vào database
-	// Sử dụng dấu gạch chéo xuôi ('/') cho đường dẫn URL
 	product.ImageURL = filepath.ToSlash(filepath.Join("/uploads/images", handler.Filename))
 
 	// Lấy các thông tin khác từ form
@@ -132,6 +141,15 @@ func GetProductByID(w http.ResponseWriter, r *http.Request) {
 
 // Update a product by ID
 func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền cập nhật sản phẩm (Admin hoặc Staff)
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "You are not authorized to update products", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id, err := primitive.ObjectIDFromHex(params["id"])
 	if err != nil {
@@ -235,6 +253,15 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 
 // Delete a product by ID
 func DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền xóa sản phẩm (chỉ cho Admin)
+	if claims.Role != Middleware.Admin {
+		http.Error(w, "You are not authorized to delete products", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id, err := primitive.ObjectIDFromHex(params["id"])
 	if err != nil {

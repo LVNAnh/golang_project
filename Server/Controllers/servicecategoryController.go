@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"Server/Middleware" // Import middleware để sử dụng JWT
 	"Server/Models"
 
 	"github.com/gorilla/mux"
@@ -20,6 +21,12 @@ func getServiceCategoryCollection() *mongo.Collection {
 
 // Create a new service category
 func CreateServiceCategory(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("user").(*Middleware.UserClaims) // Lấy thông tin người dùng từ context
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
 	var serviceCategory Models.ServiceCategory
 	err := json.NewDecoder(r.Body).Decode(&serviceCategory)
 	if err != nil {
@@ -84,6 +91,12 @@ func GetServiceCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 // Update a service category by ID
 func UpdateServiceCategory(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("user").(*Middleware.UserClaims) // Lấy thông tin người dùng từ context
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id := params["id"]
 
@@ -122,6 +135,12 @@ func UpdateServiceCategory(w http.ResponseWriter, r *http.Request) {
 
 // Delete a service category by ID
 func DeleteServiceCategory(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("user").(*Middleware.UserClaims) // Lấy thông tin người dùng từ context
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "Permission denied", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id := params["id"]
 

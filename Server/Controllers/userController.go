@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"Server/Middleware"
 	"Server/Models"
 
 	"github.com/gorilla/mux"
@@ -57,7 +58,16 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	user.Role = Models.Customer
 
 	result, _ := collection.InsertOne(ctx, user)
-	json.NewEncoder(w).Encode(result)
+
+	// Trả về phản hồi không có ID, email, và role
+	response := struct {
+		Success bool `json:"success"`
+	}{
+		Success: result.InsertedID != nil,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func LoginUser(w http.ResponseWriter, r *http.Request) {
@@ -84,18 +94,26 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Trả về cả role
+	// Chuyển đổi role từ Models.Role sang Middleware.Role
+	middlewareRole := Middleware.Role(dbUser.Role)
+
+	// Tạo JWT token và sử dụng dbUser.ID trực tiếp
+	token, err := Middleware.GenerateJWT(dbUser.ID, middlewareRole)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	// Trả về token và thông tin người dùng
 	response := struct {
-		ID        primitive.ObjectID `json:"id"`
-		FirstName string             `json:"firstname"`
-		LastName  string             `json:"lastname"`
-		Email     string             `json:"email"`
-		Role      Models.Role        `json:"role"`
+		Token     string      `json:"token"`
+		FirstName string      `json:"firstname"`
+		LastName  string      `json:"lastname"`
+		Role      Models.Role `json:"role"`
 	}{
-		ID:        dbUser.ID,
+		Token:     token,
 		FirstName: dbUser.FirstName,
 		LastName:  dbUser.LastName,
-		Email:     dbUser.Email,
 		Role:      dbUser.Role,
 	}
 
@@ -169,9 +187,25 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, _ := primitive.ObjectIDFromHex(params["id"])
+	// Lấy user ID từ JWT claims
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+	userID := claims.ID
 
+	// Lấy ID từ URL (id của user muốn cập nhật)
+	params := mux.Vars(r)
+	requestedID, err := primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// So sánh userID từ JWT với requestedID
+	if userID != requestedID {
+		http.Error(w, "You are not allowed to update this user", http.StatusForbidden)
+		return
+	}
+
+	// Tiếp tục xử lý cập nhật thông tin
 	var user Models.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
@@ -182,14 +216,14 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Update user
-	result, err := collection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": user})
+	// Cập nhật thông tin người dùng
+	result, err := collection.UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": user})
 	if err != nil {
 		http.Error(w, "Failed to update user", http.StatusInternalServerError)
 		return
 	}
 
-	// Formatting response
+	// Định dạng phản hồi
 	response := struct {
 		Success  bool `json:"success"`
 		Matched  int  `json:"matched_count"`

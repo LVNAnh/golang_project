@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
-function LoginForm({ setUser }) {
+function LoginForm({ setUser, updateCartCount }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,9 +19,26 @@ function LoginForm({ setUser }) {
 
       if (response.ok) {
         const userData = await response.json();
-        localStorage.setItem("user", JSON.stringify(userData)); // Lưu trữ thông tin người dùng
+
+        // Lưu trữ token JWT vào localStorage
+        if (userData.token) {
+          localStorage.setItem("token", userData.token);
+
+          // Giải mã token để lấy vai trò người dùng
+          const decodedToken = jwtDecode(userData.token);
+          const userRole = decodedToken.role;
+
+          // Lưu vai trò vào state và localStorage
+          localStorage.setItem("userRole", userRole);
+          setUser({ ...userData, role: userRole });
+
+          // Gọi updateCartCount để cập nhật giỏ hàng ngay sau khi đăng nhập
+          updateCartCount();
+        }
+
+        localStorage.setItem("user", JSON.stringify(userData)); // Lưu thông tin người dùng vào localStorage
         setUser(userData); // Lưu thông tin người dùng vào state
-        navigate("/");
+        window.location.href = "/";
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Đăng nhập không thành công");

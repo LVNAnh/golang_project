@@ -31,6 +31,9 @@ function AddServiceCategory() {
     severity: "success",
   });
 
+  // Lấy JWT token từ localStorage
+  const token = localStorage.getItem("token");
+
   // Fetch service categories from the server
   const fetchServiceCategories = async () => {
     try {
@@ -55,7 +58,11 @@ function AddServiceCategory() {
   // Add new service category
   const handleAddCategory = async () => {
     try {
-      await axios.post("http://localhost:8080/servicecategory", formData);
+      await axios.post("http://localhost:8080/servicecategory", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Thêm token vào header
+        },
+      });
       setSnackbar({
         open: true,
         message: "Danh mục dịch vụ đã được thêm!",
@@ -77,7 +84,12 @@ function AddServiceCategory() {
     try {
       await axios.put(
         `http://localhost:8080/servicecategory/${editCategoryId}`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+          },
+        }
       );
       setSnackbar({
         open: true,
@@ -119,7 +131,12 @@ function AddServiceCategory() {
     ) {
       try {
         await axios.delete(
-          `http://localhost:8080/servicecategory/${categoryId}`
+          `http://localhost:8080/servicecategory/${categoryId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Thêm token vào header
+            },
+          }
         );
         setSnackbar({
           open: true,
@@ -156,7 +173,15 @@ function AddServiceCategory() {
       <Button
         variant="contained"
         color="primary"
-        onClick={() => setShowDialog(true)}
+        onClick={() => {
+          setEditMode(false); // Đặt về chế độ thêm mới
+          setFormData({
+            // Đặt lại form về trạng thái ban đầu
+            name: "",
+            description: "",
+          });
+          setShowDialog(true); // Mở Dialog để thêm danh mục dịch vụ mới
+        }}
       >
         Thêm danh mục dịch vụ
       </Button>
@@ -174,7 +199,7 @@ function AddServiceCategory() {
           </TableHead>
           <TableBody>
             {serviceCategories.map((category, index) => (
-              <TableRow key={category._id}>
+              <TableRow key={category.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{category.name}</TableCell>
                 <TableCell>{category.description}</TableCell>
@@ -248,5 +273,4 @@ function AddServiceCategory() {
     </div>
   );
 }
-
 export default AddServiceCategory;

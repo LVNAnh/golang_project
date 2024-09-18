@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"Server/Middleware"
 	"Server/Models"
 
 	"github.com/gorilla/mux"
@@ -18,6 +19,15 @@ import (
 
 // Create a new service
 func CreateService(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền tạo dịch vụ (Admin hoặc Staff)
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "You are not authorized to create services", http.StatusForbidden)
+		return
+	}
+
 	var service Models.Service
 
 	// Parse multipart form
@@ -128,6 +138,15 @@ func GetServiceByID(w http.ResponseWriter, r *http.Request) {
 
 // Update a service by ID
 func UpdateService(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền cập nhật dịch vụ (Admin hoặc Staff)
+	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
+		http.Error(w, "You are not authorized to update services", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id, err := primitive.ObjectIDFromHex(params["id"])
 	if err != nil {
@@ -228,6 +247,15 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 
 // Delete a service by ID
 func DeleteService(w http.ResponseWriter, r *http.Request) {
+	// Lấy claims từ context để kiểm tra quyền
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+
+	// Kiểm tra xem người dùng có quyền xóa dịch vụ (chỉ cho Admin)
+	if claims.Role != Middleware.Admin {
+		http.Error(w, "You are not authorized to delete services", http.StatusForbidden)
+		return
+	}
+
 	params := mux.Vars(r)
 	id, err := primitive.ObjectIDFromHex(params["id"])
 	if err != nil {

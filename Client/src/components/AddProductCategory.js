@@ -31,11 +31,19 @@ function AddProductCategory() {
     severity: "success",
   });
 
+  // Lấy token từ localStorage
+  const token = localStorage.getItem("token");
+
   // Fetch product categories from the server
   const fetchProductCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/productcategories"
+        "http://localhost:8080/productcategories",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+          },
+        }
       );
       setProductCategories(response.data);
     } catch (error) {
@@ -44,18 +52,6 @@ function AddProductCategory() {
   };
 
   useEffect(() => {
-    const fetchProductCategories = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:8080/productcategories"
-        );
-        console.log(response.data); // Log dữ liệu trả về để kiểm tra
-        setProductCategories(response.data);
-      } catch (error) {
-        console.error("Error fetching product categories:", error);
-      }
-    };
-
     fetchProductCategories();
   }, []);
 
@@ -67,7 +63,11 @@ function AddProductCategory() {
   // Add new product category
   const handleAddCategory = async () => {
     try {
-      await axios.post("http://localhost:8080/productcategory", formData);
+      await axios.post("http://localhost:8080/productcategory", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Thêm token vào header
+        },
+      });
       setSnackbar({
         open: true,
         message: "Danh mục sản phẩm đã được thêm!",
@@ -86,11 +86,15 @@ function AddProductCategory() {
 
   // Update existing product category
   const handleUpdateCategory = async () => {
-    console.log("Updating category with ID:", editCategoryId); // Kiểm tra giá trị ID trước khi gửi
     try {
       await axios.put(
         `http://localhost:8080/productcategory/${editCategoryId}`,
-        formData
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Thêm token vào header
+          },
+        }
       );
       setSnackbar({
         open: true,
@@ -112,7 +116,6 @@ function AddProductCategory() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editMode) {
-      console.log("Updating category with ID:", editCategoryId); // Log lại ID để kiểm tra
       handleUpdateCategory();
     } else {
       handleAddCategory();
@@ -121,23 +124,24 @@ function AddProductCategory() {
 
   // Handle edit action
   const handleEdit = (category) => {
-    console.log("Selected category for editing:", category); // Kiểm tra đối tượng category
-    console.log("Edit Category ID:", category.id); // Log ra ID để kiểm tra
-
     setFormData({ name: category.name, description: category.description });
-    setEditCategoryId(category.id); // Lưu ID vào state sử dụng đúng trường `id`
+    setEditCategoryId(category.id); // Sử dụng _id thay vì id để tương thích với MongoDB
     setEditMode(true);
     setShowDialog(true);
   };
 
   const handleDelete = async (categoryId) => {
-    console.log("Deleting category with ID:", categoryId); // Log ra ID để kiểm tra
     if (
       window.confirm("Bạn có chắc chắn muốn xóa danh mục sản phẩm này không?")
     ) {
       try {
         await axios.delete(
-          `http://localhost:8080/productcategory/${categoryId}`
+          `http://localhost:8080/productcategory/${categoryId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`, // Thêm token vào header
+            },
+          }
         );
         setSnackbar({
           open: true,
@@ -174,7 +178,15 @@ function AddProductCategory() {
       <Button
         variant="contained"
         color="primary"
-        onClick={() => setShowDialog(true)}
+        onClick={() => {
+          setEditMode(false); // Đặt về chế độ thêm mới
+          setFormData({
+            // Đặt lại form về trạng thái ban đầu
+            name: "",
+            description: "",
+          });
+          setShowDialog(true); // Mở Dialog để thêm danh mục sản phẩm mới
+        }}
       >
         Thêm danh mục sản phẩm
       </Button>
@@ -192,24 +204,20 @@ function AddProductCategory() {
           </TableHead>
           <TableBody>
             {productCategories.map((category, index) => (
-              <TableRow key={category._id}>
+              <TableRow key={category.id}>
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>{category.name}</TableCell>
                 <TableCell>{category.description}</TableCell>
                 <TableCell>
-                  {/* Sử dụng hàm console.log để kiểm tra khi nhấn vào edit */}
                   <IconButton
                     color="primary"
-                    onClick={() => {
-                      console.log("Selected category for editing:", category); // Log toàn bộ đối tượng category
-                      handleEdit(category);
-                    }}
+                    onClick={() => handleEdit(category)}
                   >
                     <FaEdit />
                   </IconButton>
                   <IconButton
                     color="secondary"
-                    onClick={() => handleDelete(category.id)}
+                    onClick={() => handleDelete(category.id)} // Sử dụng _id thay vì id
                   >
                     <FaTrash />
                   </IconButton>

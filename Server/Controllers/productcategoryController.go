@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"Server/Middleware"
 	"Server/Models"
 
 	"github.com/gorilla/mux"
@@ -20,6 +21,13 @@ func getCollection(name string) *mongo.Collection {
 
 // Create a new product category
 func CreateProductCategory(w http.ResponseWriter, r *http.Request) {
+	// Middleware kiểm tra quyền Admin hoặc Staff
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+	if claims.Role > Middleware.Staff {
+		http.Error(w, "You do not have permission to create a product category", http.StatusForbidden)
+		return
+	}
+
 	var productCategory Models.ProductCategory
 	err := json.NewDecoder(r.Body).Decode(&productCategory)
 	if err != nil {
@@ -84,17 +92,22 @@ func GetProductCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 // Update a product category by ID
 func UpdateProductCategory(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id := params["id"] // Lấy ID từ URL
+	// Middleware kiểm tra quyền Admin hoặc Staff
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+	if claims.Role > Middleware.Staff {
+		http.Error(w, "You do not have permission to update a product category", http.StatusForbidden)
+		return
+	}
 
-	// Chuyển đổi ID từ chuỗi sang ObjectID
+	params := mux.Vars(r)
+	id := params["id"]
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "Invalid ID format", http.StatusBadRequest)
 		return
 	}
 
-	// Sử dụng objectID cho các truy vấn tiếp theo
 	var productCategory Models.ProductCategory
 	err = json.NewDecoder(r.Body).Decode(&productCategory)
 	if err != nil {
@@ -124,10 +137,16 @@ func UpdateProductCategory(w http.ResponseWriter, r *http.Request) {
 
 // Delete a product category by ID
 func DeleteProductCategory(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id := params["id"] // Lấy ID từ URL
+	// Middleware kiểm tra quyền Admin
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+	if claims.Role != Middleware.Admin {
+		http.Error(w, "You do not have permission to delete a product category", http.StatusForbidden)
+		return
+	}
 
-	// Chuyển đổi ID từ chuỗi sang ObjectID
+	params := mux.Vars(r)
+	id := params["id"]
+
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "Invalid ID format", http.StatusBadRequest)
@@ -146,5 +165,5 @@ func DeleteProductCategory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent) // Trả về 204 No Content nếu xóa thành công
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -27,8 +27,8 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 const SERVICES_PER_PAGE = 20;
 
 function AddService() {
-  const [services, setServices] = useState([]); // Always initialize as an empty array
-  const [serviceCategories, setServiceCategories] = useState([]); // Always initialize as an empty array
+  const [services, setServices] = useState([]);
+  const [serviceCategories, setServiceCategories] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,25 +52,36 @@ function AddService() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredServices, setFilteredServices] = useState([]);
 
+  const token = localStorage.getItem("token"); // Lấy token từ localStorage
+
   const fetchServices = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/services");
-      setServices(response.data || []); // Ensure the value is an array even if null
+      const response = await axios.get("http://localhost:8080/services", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Gửi kèm token
+        },
+      });
+      setServices(response.data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
-      setServices([]); // Fallback to empty array in case of an error
+      setServices([]);
     }
   };
 
   const fetchServiceCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/servicecategories"
+        "http://localhost:8080/servicecategories",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Gửi kèm token
+          },
+        }
       );
-      setServiceCategories(response.data || []); // Ensure it's an array
+      setServiceCategories(response.data || []);
     } catch (error) {
       console.error("Error fetching service categories:", error);
-      setServiceCategories([]); // Fallback to empty array
+      setServiceCategories([]);
     }
   };
 
@@ -139,6 +150,7 @@ function AddService() {
     try {
       await axios.post("http://localhost:8080/service", formDataToSend, {
         headers: {
+          Authorization: `Bearer ${token}`, // Gửi kèm token
           "Content-Type": "multipart/form-data",
         },
       });
@@ -178,6 +190,7 @@ function AddService() {
         formDataToSend,
         {
           headers: {
+            Authorization: `Bearer ${token}`, // Gửi kèm token
             "Content-Type": "multipart/form-data",
           },
         }
@@ -198,19 +211,6 @@ function AddService() {
     }
   };
 
-  const handleEdit = (service) => {
-    setFormData({
-      name: service.name,
-      price: service.price,
-      description: service.description,
-      servicecategory: service.servicecategory,
-      image: null,
-    });
-    setEditServiceId(service.id);
-    setEditMode(true);
-    setShowDialog(true);
-  };
-
   const handleDelete = async (serviceId) => {
     setDeleteServiceId(serviceId);
     setShowConfirmDialog(true);
@@ -218,7 +218,11 @@ function AddService() {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8080/service/${deleteServiceId}`);
+      await axios.delete(`http://localhost:8080/service/${deleteServiceId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Gửi kèm token
+        },
+      });
       setSnackbar({
         open: true,
         message: "Dịch vụ đã được xóa!",
@@ -266,6 +270,19 @@ function AddService() {
     });
   };
 
+  const handleEdit = (service) => {
+    setFormData({
+      name: service.name,
+      price: service.price,
+      description: service.description,
+      servicecategory: service.servicecategory,
+      image: null,
+    });
+    setEditServiceId(service.id);
+    setEditMode(true);
+    setShowDialog(true);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editMode) {
@@ -283,7 +300,18 @@ function AddService() {
       <Button
         variant="contained"
         color="primary"
-        onClick={() => setShowDialog(true)} // Khi click sẽ mở dialog thêm dịch vụ
+        onClick={() => {
+          setEditMode(false); // Đặt về chế độ Thêm (không phải Chỉnh sửa)
+          setFormData({
+            // Đặt lại form về trạng thái ban đầu
+            name: "",
+            price: "",
+            description: "",
+            servicecategory: "",
+            image: null,
+          });
+          setShowDialog(true); // Hiển thị Dialog để thêm dịch vụ mới
+        }}
         style={{ marginBottom: "20px" }}
       >
         Thêm Dịch Vụ

@@ -111,6 +111,10 @@ function AddProduct() {
     currentPage * PRODUCTS_PER_PAGE
   );
 
+  const getToken = () => {
+    return localStorage.getItem("token");
+  };
+
   const handleAddProduct = async () => {
     if (
       !formData.name ||
@@ -136,15 +140,12 @@ function AddProduct() {
     }
 
     try {
-      await axios.post(
-        "http://localhost:8080/product",
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axios.post("http://localhost:8080/product", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${getToken()}`, // Thêm token vào header
+        },
+      });
       setSnackbar({
         open: true,
         message: "Sản phẩm đã được thêm!",
@@ -165,7 +166,6 @@ function AddProduct() {
     }
   };
 
-  // Hàm cập nhật sản phẩm
   const handleUpdateProduct = async () => {
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.name);
@@ -183,6 +183,7 @@ function AddProduct() {
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${getToken()}`, // Thêm token vào header
           },
         }
       );
@@ -222,7 +223,11 @@ function AddProduct() {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8080/product/${deleteProductId}`);
+      await axios.delete(`http://localhost:8080/product/${deleteProductId}`, {
+        headers: {
+          Authorization: `Bearer ${getToken()}`, // Thêm token vào header
+        },
+      });
       setSnackbar({
         open: true,
         message: "Sản phẩm đã được xóa!",
@@ -282,6 +287,26 @@ function AddProduct() {
   return (
     <div>
       <h2>Quản lý sản phẩm</h2>
+
+      {/* Thêm button để mở Dialog thêm sản phẩm */}
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => {
+          setShowDialog(true); // Mở dialog
+          setEditMode(false); // Đặt chế độ thành thêm mới sản phẩm
+          setFormData({
+            name: "",
+            price: "",
+            stock: "",
+            productcategory: "",
+            image: null,
+          }); // Reset dữ liệu form để tránh hiện dữ liệu cũ
+        }}
+        style={{ marginBottom: "20px" }}
+      >
+        Thêm Sản Phẩm
+      </Button>
 
       {/* Bộ lọc và sắp xếp */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "20px" }}>

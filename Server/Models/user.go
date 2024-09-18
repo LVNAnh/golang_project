@@ -1,6 +1,8 @@
 package Models
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,4 +24,40 @@ type User struct {
 	Address   string             `json:"address,omitempty"`
 	Role      Role               `json:"role,omitempty"`
 	Avatar    string             `json:"avatar,omitempty"`
+	Cart      Cart               `json:"cart,omitempty"` // Thêm giỏ hàng vào User
+}
+
+type Cart struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	UserID    primitive.ObjectID `bson:"user_id,omitempty" json:"user_id,omitempty"` // Liên kết với User
+	Items     []CartItem         `bson:"items,omitempty" json:"items,omitempty"`     // Danh sách các sản phẩm trong giỏ hàng
+	CreatedAt time.Time          `bson:"created_at,omitempty" json:"created_at,omitempty"`
+	UpdatedAt time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+}
+
+type CartItem struct {
+	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"` // Liên kết với sản phẩm
+	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`     // Số lượng sản phẩm trong giỏ hàng
+	Price     float64            `bson:"price,omitempty" json:"price,omitempty"`           // Giá tại thời điểm thêm sản phẩm vào giỏ
+	Name      string             `bson:"-" json:"name,omitempty"`                          // Tên sản phẩm (không lưu trong MongoDB, chỉ dùng để hiển thị)
+	ImageURL  string             `bson:"-" json:"imageurl,omitempty"`                      // URL ảnh sản phẩm (không lưu trong MongoDB)
+}
+
+// Struct cho Order
+type Order struct {
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	UserID     primitive.ObjectID `bson:"user_id,omitempty" json:"user_id,omitempty"`
+	Items      []OrderItem        `bson:"items,omitempty" json:"items,omitempty"` // Danh sách các OrderItem
+	TotalPrice float64            `bson:"total_price,omitempty" json:"total_price,omitempty"`
+	CreatedAt  time.Time          `bson:"created_at,omitempty" json:"created_at,omitempty"`
+	UpdatedAt  time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+}
+
+// Struct cho OrderItem
+type OrderItem struct {
+	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"`
+	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`
+	Price     float64            `bson:"price,omitempty" json:"price,omitempty"` // Giá tại thời điểm mua
+	Name      string             `bson:"-" json:"name,omitempty"`                // Tên sản phẩm (không lưu trong MongoDB)
+	ImageURL  string             `bson:"-" json:"imageurl,omitempty"`            // URL ảnh sản phẩm (không lưu trong MongoDB)
 }
