@@ -72,45 +72,51 @@ function Shop({ updateCartCount }) {
   return (
     <Box sx={{ padding: 4 }}>
       <Grid container spacing={2}>
-        {products.map((product) => (
-          <Grid item xs={12} sm={6} md={3} key={product.id}>
-            <Card
-              sx={{
-                width: "300px",
-                height: "450px",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-              }}
-            >
-              <CardMedia
-                component="img"
-                height="250"
-                image={`http://localhost:8080/${product.imageurl}`}
-                alt={product.name}
-                sx={{ objectFit: "cover", width: "100%", height: "250px" }}
-              />
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography gutterBottom variant="h5" component="div">
-                  {product.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {product.price.toLocaleString()} VND
-                </Typography>
-              </CardContent>
-              <Box sx={{ padding: 2 }}>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleAddToCart(product)}
-                  fullWidth
-                >
-                  Thêm vào giỏ
-                </Button>
-              </Box>
-            </Card>
-          </Grid>
-        ))}
+        {products && products.length > 0 ? (
+          products.map((product) => (
+            <Grid item xs={12} sm={6} md={3} key={product.id}>
+              <Card
+                sx={{
+                  width: "300px",
+                  height: "450px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                }}
+              >
+                <CardMedia
+                  component="img"
+                  height="250"
+                  image={`http://localhost:8080/${product.imageurl}`}
+                  alt={product.name}
+                  sx={{ objectFit: "cover", width: "100%", height: "250px" }}
+                />
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {product.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {product.price.toLocaleString()} VND
+                  </Typography>
+                </CardContent>
+                <Box sx={{ padding: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleAddToCart(product)}
+                    fullWidth
+                  >
+                    Thêm vào giỏ
+                  </Button>
+                </Box>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Typography variant="h6" align="center" color="text.secondary">
+            Không có sản phẩm nào để hiển thị
+          </Typography>
+        )}
       </Grid>
 
       {/* Snackbar for notifications */}

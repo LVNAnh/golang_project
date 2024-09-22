@@ -43,6 +43,24 @@ type CartItem struct {
 	ImageURL  string             `bson:"-" json:"imageurl,omitempty"`                      // URL ảnh sản phẩm (không lưu trong MongoDB)
 }
 
+// Struct cho SelectedItems (Danh sách các sản phẩm đã được chọn)
+type SelectedItems struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	UserID    primitive.ObjectID `bson:"user_id,omitempty" json:"user_id,omitempty"` // Liên kết với User
+	Items     []SelectedItem     `bson:"items,omitempty" json:"items,omitempty"`     // Danh sách các sản phẩm đã chọn
+	CreatedAt time.Time          `bson:"created_at,omitempty" json:"created_at,omitempty"`
+	UpdatedAt time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
+}
+
+// Struct cho từng sản phẩm đã được chọn trong SelectedItems
+type SelectedItem struct {
+	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"`
+	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`
+	Price     float64            `bson:"price,omitempty" json:"price,omitempty"`       // Giá tại thời điểm chọn
+	Name      string             `bson:"name,omitempty" json:"name,omitempty"`         // Tên sản phẩm, được lưu trữ trong MongoDB
+	ImageURL  string             `bson:"imageurl,omitempty" json:"imageurl,omitempty"` // URL ảnh sản phẩm, được lưu trữ trong MongoDB
+}
+
 // Struct cho Order
 type Order struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
@@ -57,7 +75,7 @@ type Order struct {
 type OrderItem struct {
 	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"`
 	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`
-	Price     float64            `bson:"price,omitempty" json:"price,omitempty"` // Giá tại thời điểm mua
-	Name      string             `bson:"-" json:"name,omitempty"`                // Tên sản phẩm (không lưu trong MongoDB)
-	ImageURL  string             `bson:"-" json:"imageurl,omitempty"`            // URL ảnh sản phẩm (không lưu trong MongoDB)
+	Price     float64            `bson:"price,omitempty" json:"price,omitempty"`       // Giá tại thời điểm mua
+	Name      string             `bson:"name,omitempty" json:"name,omitempty"`         // Tên sản phẩm (không lưu trong MongoDB)
+	ImageURL  string             `bson:"imageurl,omitempty" json:"imageurl,omitempty"` // URL ảnh sản phẩm (không lưu trong MongoDB)
 }

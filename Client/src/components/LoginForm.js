@@ -20,24 +20,20 @@ function LoginForm({ setUser, updateCartCount }) {
       if (response.ok) {
         const userData = await response.json();
 
-        // Lưu trữ token JWT vào localStorage
         if (userData.token) {
           localStorage.setItem("token", userData.token);
 
-          // Giải mã token để lấy vai trò người dùng
           const decodedToken = jwtDecode(userData.token);
           const userRole = decodedToken.role;
 
-          // Lưu vai trò vào state và localStorage
           localStorage.setItem("userRole", userRole);
           setUser({ ...userData, role: userRole });
 
-          // Gọi updateCartCount để cập nhật giỏ hàng ngay sau khi đăng nhập
           updateCartCount();
         }
 
-        localStorage.setItem("user", JSON.stringify(userData)); // Lưu thông tin người dùng vào localStorage
-        setUser(userData); // Lưu thông tin người dùng vào state
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
         window.location.href = "/";
       } else {
         const errorData = await response.json();

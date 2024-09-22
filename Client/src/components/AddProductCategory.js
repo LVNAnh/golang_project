@@ -203,27 +203,35 @@ function AddProductCategory() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {productCategories.map((category, index) => (
-              <TableRow key={category.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>{category.description}</TableCell>
-                <TableCell>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleEdit(category)}
-                  >
-                    <FaEdit />
-                  </IconButton>
-                  <IconButton
-                    color="secondary"
-                    onClick={() => handleDelete(category.id)} // Sử dụng _id thay vì id
-                  >
-                    <FaTrash />
-                  </IconButton>
+            {productCategories && productCategories.length > 0 ? (
+              productCategories.map((category, index) => (
+                <TableRow key={category.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.description}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      color="primary"
+                      onClick={() => handleEdit(category)}
+                    >
+                      <FaEdit />
+                    </IconButton>
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleDelete(category.id)}
+                    >
+                      <FaTrash />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  Không có danh mục sản phẩm nào.
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>

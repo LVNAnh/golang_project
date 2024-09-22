@@ -54,8 +54,15 @@ func SetupRoutes() *mux.Router {
 	router.Handle("/cart/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateCart), Middleware.Customer)).Methods("POST")
 
 	// Order routes
-	router.Handle("/order", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateOrder), Middleware.Customer)).Methods("POST") // Tạo đơn hàng
-	router.Handle("/orders", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetOrders), Middleware.Customer)).Methods("GET")   // Lấy danh sách đơn hàng của người dùng
+	router.Handle("/order", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateOrder), Middleware.Customer)).Methods("POST")
+	router.Handle("/orders", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetOrders), Middleware.Customer)).Methods("GET")
+
+	// SelectedItems routes
+	router.Handle("/selecteditems", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetSelectedItems), Middleware.Customer)).Methods("GET")
+	router.Handle("/selecteditems/add", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddToSelectedItems), Middleware.Customer)).Methods("POST")
+	router.Handle("/selecteditems/remove", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.RemoveFromSelectedItems), Middleware.Customer)).Methods("DELETE")
+	router.Handle("/selecteditems/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateSelectedItems), Middleware.Customer)).Methods("POST")
+	router.Handle("/selecteditems/clear", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.ClearSelectedItems), Middleware.Customer)).Methods("DELETE")
 
 	return router
 }

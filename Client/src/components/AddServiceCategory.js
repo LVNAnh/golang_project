@@ -198,27 +198,39 @@ function AddServiceCategory() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {serviceCategories.map((category, index) => (
-              <TableRow key={category.id}>
-                <TableCell>{index + 1}</TableCell>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>{category.description}</TableCell>
-                <TableCell>
-                  <IconButton
-                    color="primary"
-                    onClick={() => handleEdit(category)}
-                  >
-                    <FaEdit />
-                  </IconButton>
-                  <IconButton
-                    color="secondary"
-                    onClick={() => handleDelete(category.id)}
-                  >
-                    <FaTrash />
-                  </IconButton>
+            {serviceCategories && serviceCategories.length > 0 ? (
+              serviceCategories.map((category, index) => (
+                <TableRow key={category.id ? category.id : index}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{category.name || "Tên không xác định"}</TableCell>
+                  <TableCell>
+                    {category.description || "Mô tả không có sẵn"}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton
+                      color="primary"
+                      onClick={() => handleEdit(category)}
+                      disabled={!category.id} // Vô hiệu hóa nút nếu không có ID
+                    >
+                      <FaEdit />
+                    </IconButton>
+                    <IconButton
+                      color="secondary"
+                      onClick={() => handleDelete(category.id)}
+                      disabled={!category.id} // Vô hiệu hóa nút nếu không có ID
+                    >
+                      <FaTrash />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} align="center">
+                  Không có danh mục nào để hiển thị
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </TableContainer>

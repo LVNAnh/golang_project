@@ -63,44 +63,52 @@ function ServiceBooking() {
   return (
     <Box sx={{ padding: 4 }}>
       <Grid container spacing={2}>
-        {services.map((service) => (
-          <Grid item xs={12} sm={6} md={3} key={service.id}>
-            <Card>
-              {/* Thêm hình ảnh dịch vụ */}
-              <CardMedia
-                component="img"
-                height="250"
-                image={`http://localhost:8080/${service.imageurl}`}
-                alt={service.name}
-                sx={{
-                  objectFit: "cover",
-                  width: "100%",
-                  height: "250px",
-                  cursor: "pointer", // Con trỏ thay đổi khi hover vào ảnh
-                }}
-                onClick={() =>
-                  handleClickImage(`http://localhost:8080/${service.imageurl}`)
-                } // Click để mở ảnh lớn
-              />
-              <CardContent>
-                <Typography gutterBottom variant="h5" component="div">
-                  {service.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {service.price.toLocaleString()} VND
-                </Typography>
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleBooking(service)}
-                  sx={{ mt: 2 }}
-                >
-                  Đặt
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+        {services && services.length > 0 ? (
+          services.map((service) => (
+            <Grid item xs={12} sm={6} md={3} key={service.id}>
+              <Card>
+                {/* Thêm hình ảnh dịch vụ */}
+                <CardMedia
+                  component="img"
+                  height="250"
+                  image={`http://localhost:8080/${service.imageurl}`}
+                  alt={service.name}
+                  sx={{
+                    objectFit: "cover",
+                    width: "100%",
+                    height: "250px",
+                    cursor: "pointer", // Con trỏ thay đổi khi hover vào ảnh
+                  }}
+                  onClick={() =>
+                    handleClickImage(
+                      `http://localhost:8080/${service.imageurl}`
+                    )
+                  } // Click để mở ảnh lớn
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {service.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {service.price.toLocaleString()} VND
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleBooking(service)}
+                    sx={{ mt: 2 }}
+                  >
+                    Đặt
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Typography variant="h6" align="center" color="text.secondary">
+            Không có dịch vụ nào để hiển thị
+          </Typography>
+        )}
       </Grid>
 
       {/* Dialog for full-screen image */}

@@ -460,11 +460,17 @@ function AddProduct() {
             onChange={handleChange}
             fullWidth
           >
-            {productCategories.map((category) => (
-              <MenuItem key={category.id} value={category.id}>
-                {category.name}
+            {productCategories && productCategories.length > 0 ? (
+              productCategories.map((category) => (
+                <MenuItem key={category.id} value={category.id}>
+                  {category.name}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="" disabled>
+                Không có danh mục
               </MenuItem>
-            ))}
+            )}
           </Select>
 
           {/* Input để chọn ảnh */}

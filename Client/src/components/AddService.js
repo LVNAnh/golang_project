@@ -361,11 +361,15 @@ function AddService() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {displayedServices.length > 0 ? (
+            {displayedServices && displayedServices.length > 0 ? (
               displayedServices.map((service, index) => {
-                const category = serviceCategories.find(
-                  (cat) => cat.id === service.servicecategory
-                );
+                // Kiểm tra nếu serviceCategories là một mảng hợp lệ
+                const category =
+                  serviceCategories && serviceCategories.length > 0
+                    ? serviceCategories.find(
+                        (cat) => cat.id === service.servicecategory
+                      )
+                    : null;
 
                 return (
                   <TableRow key={service.id}>

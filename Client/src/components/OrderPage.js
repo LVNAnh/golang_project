@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom"; // Sử dụng useLocation để nhận dữ liệu từ trang Cart
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   Button,
@@ -13,17 +13,50 @@ import {
 import axios from "axios";
 
 function OrderPage() {
-  const location = useLocation(); // Nhận dữ liệu từ Cart thông qua navigate
-  const navigate = useNavigate(); // Điều hướng sau khi đặt hàng thành công
-  const [openDialog, setOpenDialog] = useState(false); // Dialog để xác nhận đặt hàng
+  const navigate = useNavigate();
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  const selectedProducts = location.state?.selectedProducts || [];
+  // Gọi API để lấy danh sách selected items khi trang OrderPage được tải
+  useEffect(() => {
+    const fetchSelectedItems = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8080/selecteditems",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (response.data.items) {
+          setSelectedProducts(response.data.items);
+        } else {
+          setSnackbar({
+            open: true,
+            message: "Không có sản phẩm nào được chọn.",
+            severity: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching selected items", error);
+        setSnackbar({
+          open: true,
+          message: "Có lỗi xảy ra khi lấy danh sách sản phẩm đã chọn.",
+          severity: "error",
+        });
+      }
+    };
 
+    fetchSelectedItems();
+  }, []);
+
+  // Tính tổng tiền đơn hàng
   const calculateTotalPrice = () => {
     const totalPrice = selectedProducts.reduce(
       (sum, item) => sum + item.price * item.quantity,
@@ -32,28 +65,59 @@ function OrderPage() {
     return totalPrice.toLocaleString();
   };
 
-  const handleOrderConfirmation = async () => {
-    setOpenDialog(true); // Mở dialog xác nhận
+  // Xác nhận đặt hàng
+  const handleOrderConfirmation = () => {
+    setOpenDialog(true);
   };
 
+  // Đặt hàng
   const handlePlaceOrder = async () => {
     try {
-      const response = await axios.post(
-        "http://localhost:8080/order",
-        { items: selectedProducts }, // Chỉ gửi các sản phẩm đã chọn
+      // Lấy các sản phẩm từ selected_items trước khi tạo đơn hàng
+      const selectedItemsResponse = await axios.get(
+        "http://localhost:8080/selecteditems",
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-      if (response.status === 200) {
+
+      const selectedProducts = selectedItemsResponse.data.items;
+
+      // Nếu không có sản phẩm nào được chọn, hiển thị thông báo lỗi
+      if (!selectedProducts || selectedProducts.length === 0) {
+        setSnackbar({
+          open: true,
+          message: "Không có sản phẩm nào được chọn để đặt hàng.",
+          severity: "warning",
+        });
+        return;
+      }
+
+      // Thực hiện gửi đơn hàng
+      const orderResponse = await axios.post(
+        "http://localhost:8080/order",
+        { items: selectedProducts }, // Gửi danh sách sản phẩm đã chọn
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      if (orderResponse.status === 200) {
         setSnackbar({
           open: true,
           message: "Đơn hàng đã được đặt thành công!",
           severity: "success",
         });
+
+        // Xóa các sản phẩm trong selected_items sau khi đặt hàng thành công
+        await axios.delete("http://localhost:8080/selecteditems/clear", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        // Đóng dialog và điều hướng người dùng
         setOpenDialog(false);
-        navigate("/shop"); // Điều hướng về trang chủ sau khi đặt hàng thành công
-        window.location.reload();
+        navigate("/shop");
+        window.location.reload(); // Tải lại trang để cập nhật
       }
     } catch (error) {
       console.error("Error placing order", error);
@@ -76,7 +140,7 @@ function OrderPage() {
             sx={{
               borderCollapse: "collapse",
               width: "80%",
-              margin: "0 auto", // Center the table
+              margin: "0 auto",
               tableLayout: "fixed",
             }}
           >
@@ -143,7 +207,6 @@ function OrderPage() {
         <p>Không có sản phẩm nào được chọn.</p>
       )}
 
-      {/* Dialog xác nhận đặt hàng */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
         <DialogTitle>Xác nhận đặt hàng</DialogTitle>
         <DialogContent>Bạn có chắc chắn muốn đặt hàng không?</DialogContent>
@@ -157,7 +220,6 @@ function OrderPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar thông báo */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

@@ -77,18 +77,15 @@ function AppContent() {
   const [, setCartItems] = useState([]);
   const location = useLocation();
 
-  // Fetch user and cart when component mounts
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
 
-    // Fetch cart items and update count
     updateCartCount();
   }, []);
 
-  // Function to fetch cart items and count distinct products
   const updateCartCount = async () => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -97,22 +94,21 @@ function AppContent() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const cartItems = response.data.items || [];
-        setCartItems(cartItems); // Lưu giỏ hàng vào state
+        setCartItems(cartItems);
         const distinctProductsCount = cartItems.length;
-        setCartCount(distinctProductsCount); // Cập nhật số lượng sản phẩm
+        setCartCount(distinctProductsCount);
       } catch (error) {
         console.error("Error fetching cart items:", error);
       }
     }
   };
 
-  // Handle user logout
   const handleLogout = () => {
-    localStorage.removeItem("user"); // Xóa thông tin người dùng
-    localStorage.removeItem("token"); // Xóa token đăng nhập
-    setUser(null); // Reset lại user trong state
-    setCartCount(0); // Đặt lại cartCount về 0
-    setCartItems([]); // Xóa giỏ hàng cục bộ
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
+    setCartCount(0);
+    setCartItems([]);
     window.location.reload();
   };
 
@@ -120,7 +116,6 @@ function AppContent() {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          {/* Left side */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
             <Typography
               variant="h6"
@@ -142,16 +137,13 @@ function AppContent() {
               Liên hệ
             </Button>
 
-            {/* Shop Button */}
             <Button color="inherit" component={Link} to="/shop">
               Shop
             </Button>
 
-            {/* Admin Menu */}
             {user && user.role === 0 && <AdminMenu />}
           </Box>
 
-          {/* Right side */}
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IconButton color="inherit" sx={{ ml: 3 }}>
               <Search />
@@ -164,7 +156,8 @@ function AppContent() {
 
             {user ? (
               <>
-                <Button color="inherit"
+                <Button
+                  color="inherit"
                   component={Link}
                   to="/profile"
                   sx={{
@@ -187,7 +180,6 @@ function AppContent() {
           </Box>
         </Toolbar>
       </AppBar>
-      {/* Main Content */}
       <Box sx={{ padding: 2 }}>
         {location.pathname === "/" && <ServiceBooking />}
         <Routes>
@@ -199,7 +191,6 @@ function AppContent() {
             }
           />
 
-          {/* Allow both Admin and Customer to view Shop and Cart */}
           <Route
             path="/shop"
             element={<Shop updateCartCount={updateCartCount} />}
@@ -216,7 +207,6 @@ function AppContent() {
           <Route path="/order" element={<OrderPage />} />
           <Route path="/service-booking" element={<ServiceBooking />} />
 
-          {/* Only allow Admin to access these routes */}
           {user && user.role === 0 && (
             <>
               <Route
@@ -232,7 +222,6 @@ function AppContent() {
             </>
           )}
 
-          {/* Redirect other users to the homepage */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Box>
