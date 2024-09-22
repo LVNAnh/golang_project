@@ -32,7 +32,6 @@ import {
 import { Search, ShoppingCart, Person } from "@mui/icons-material";
 import axios from "axios";
 
-// AdminMenu component to handle menu interactions
 function AdminMenu() {
   const [anchorEl, setAnchorEl] = useState(null);
 

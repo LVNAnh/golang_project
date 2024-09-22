@@ -207,3 +207,62 @@ func ClearSelectedItems(w http.ResponseWriter, r *http.Request) {
 		"message": "Selected items cleared",
 	})
 }
+
+// Thêm nhiều sản phẩm vào SelectedItems
+func AddMultipleToSelectedItems(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("user").(*Middleware.UserClaims)
+	userID := claims.ID
+
+	var selectedItems []Models.SelectedItem
+	err := json.NewDecoder(r.Body).Decode(&selectedItems)
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+
+	// Tìm kiếm hoặc tạo mới selected_items
+	collection := getSelectedItemsCollection()
+	var existingSelectedItems Models.SelectedItems
+	err = collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&existingSelectedItems)
+
+	if err == mongo.ErrNoDocuments {
+		// Tạo mới danh sách selected items
+		newSelectedItems := Models.SelectedItems{
+			UserID:    userID,
+			Items:     selectedItems,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		}
+		_, err = collection.InsertOne(context.Background(), newSelectedItems)
+	} else {
+		// Cập nhật selected_items nếu đã tồn tại
+		updatedItems := existingSelectedItems.Items
+		for _, newItem := range selectedItems {
+			exists := false
+			for i, item := range updatedItems {
+				if item.ProductID == newItem.ProductID {
+					updatedItems[i].Quantity += newItem.Quantity
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				updatedItems = append(updatedItems, newItem)
+			}
+		}
+		existingSelectedItems.Items = updatedItems
+		existingSelectedItems.UpdatedAt = time.Now()
+		_, err = collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": existingSelectedItems})
+	}
+
+	if err != nil {
+		http.Error(w, "Failed to add multiple selected items", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Items added successfully",
+		"items":   existingSelectedItems.Items,
+	})
+}

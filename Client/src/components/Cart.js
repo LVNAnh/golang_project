@@ -158,37 +158,44 @@ function Cart({ updateCartCount, setCartCount }) {
     setOpenDialog(true);
   };
 
-  const handleSelectAll = () => {
+  const handleSelectAll = async () => {
     if (allSelected) {
-      setSelectedItems([]); // Deselect all
-      cartItems.forEach(async (item) => {
-        await axios.delete("http://localhost:8080/selecteditems/remove", {
+      // Deselect all: Xóa tất cả sản phẩm đã chọn trong selected_items
+      try {
+        await axios.delete("http://localhost:8080/selecteditems/clear", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          data: { product_id: item.product_id },
         });
-      });
+        setSelectedItems([]); // Cập nhật lại danh sách sản phẩm đã chọn trên frontend
+      } catch (error) {
+        console.error("Error clearing selected items", error);
+      }
     } else {
-      const allProductIds = cartItems.map((item) => item.product_id);
-      setSelectedItems(allProductIds); // Select all
-      cartItems.forEach(async (item) => {
+      // Select all: Thêm tất cả sản phẩm vào selected_items
+      const selectedProducts = cartItems.map((item) => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        name: item.name,
+        imageurl: item.imageurl,
+      }));
+
+      try {
         await axios.post(
-          "http://localhost:8080/selecteditems/add",
-          {
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price: item.price,
-            name: item.name,
-            imageurl: item.imageurl,
-          },
+          "http://localhost:8080/selecteditems/addMultiple",
+          selectedProducts,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
           }
         );
-      });
+        const allProductIds = cartItems.map((item) => item.product_id);
+        setSelectedItems(allProductIds); // Cập nhật lại danh sách sản phẩm đã chọn trên frontend
+      } catch (error) {
+        console.error("Error adding multiple selected items", error);
+      }
     }
-    setAllSelected(!allSelected);
+    setAllSelected(!allSelected); // Cập nhật trạng thái "Chọn tất cả" hoặc "Bỏ chọn tất cả"
   };
 
   const handleCheckboxChange = async (productId) => {

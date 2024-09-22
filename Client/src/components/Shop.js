@@ -9,15 +9,21 @@ import {
   Box,
   Snackbar,
   Alert,
+  Dialog,
+  DialogContent,
+  IconButton,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // For redirecting to login if user not logged in
+import CloseIcon from "@mui/icons-material/Close"; // For close button in dialog
 
 function Shop({ updateCartCount }) {
   const [products, setProducts] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const navigate = useNavigate(); // Use navigate for redirection
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedImage, setSelectedImage] = useState("");
+  const navigate = useNavigate();
 
   // Fetch products from the server
   useEffect(() => {
@@ -69,6 +75,18 @@ function Shop({ updateCartCount }) {
     setOpenSnackbar(false);
   };
 
+  // Open image in full size modal
+  const handleClickImage = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setOpenDialog(true);
+  };
+
+  // Close full-size image modal
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedImage("");
+  };
+
   return (
     <Box sx={{ padding: 4 }}>
       <Grid container spacing={2}>
@@ -89,7 +107,17 @@ function Shop({ updateCartCount }) {
                   height="250"
                   image={`http://localhost:8080/${product.imageurl}`}
                   alt={product.name}
-                  sx={{ objectFit: "cover", width: "100%", height: "250px" }}
+                  sx={{
+                    objectFit: "cover",
+                    width: "100%",
+                    height: "250px",
+                    cursor: "pointer", // Thêm con trỏ trỏ khi hover vào ảnh
+                  }}
+                  onClick={() =>
+                    handleClickImage(
+                      `http://localhost:8080/${product.imageurl}`
+                    )
+                  } // Mở ảnh lớn khi click
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="div">
@@ -130,6 +158,28 @@ function Shop({ updateCartCount }) {
           {snackbarMessage}
         </Alert>
       </Snackbar>
+
+      {/* Dialog for full-size image */}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent sx={{ position: "relative", textAlign: "center", p: 0 }}>
+          <IconButton
+            onClick={handleCloseDialog}
+            sx={{ position: "absolute", top: 10, right: 10, zIndex: 1 }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={selectedImage}
+            alt="Full view"
+            style={{ width: "100%", height: "auto" }}
+          />
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

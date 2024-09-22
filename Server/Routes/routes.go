@@ -60,6 +60,7 @@ func SetupRoutes() *mux.Router {
 	// SelectedItems routes
 	router.Handle("/selecteditems", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetSelectedItems), Middleware.Customer)).Methods("GET")
 	router.Handle("/selecteditems/add", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddToSelectedItems), Middleware.Customer)).Methods("POST")
+	router.Handle("/selecteditems/addMultiple", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddMultipleToSelectedItems), Middleware.Customer)).Methods("POST") // Route mới
 	router.Handle("/selecteditems/remove", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.RemoveFromSelectedItems), Middleware.Customer)).Methods("DELETE")
 	router.Handle("/selecteditems/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateSelectedItems), Middleware.Customer)).Methods("POST")
 	router.Handle("/selecteditems/clear", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.ClearSelectedItems), Middleware.Customer)).Methods("DELETE")
