@@ -1,0 +1,390 @@
+{
+    "TP.HCM": [
+      {
+        "district": "Quận 1",
+        "wards": [
+          "Phường Bến Nghé",
+          "Phường Bến Thành",
+          "Phường Cô Giang",
+          "Phường Cầu Ông Lãnh",
+          "Phường Nguyễn Thái Bình",
+          "Phường Đa Kao",
+          "Phường Phạm Ngũ Lão",
+          "Phường Tân Định"
+        ]
+      },
+      {
+        "district": "Quận 2",
+        "wards": [
+          "Phường An Khánh",
+          "Phường An Lợi Đông",
+          "Phường An Phú",
+          "Phường Bình An",
+          "Phường Bình Khánh",
+          "Phường Bình Trưng Đông",
+          "Phường Bình Trưng Tây",
+          "Phường Thạnh Mỹ Lợi",
+          "Phường Thảo Điền",
+          "Phường Cát Lái",
+          "Phường Thủ Thiêm"
+        ]
+      },
+      {
+        "district": "Quận 3",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14"
+        ]
+      },
+      {
+        "district": "Quận 4",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15",
+          "Phường 16",
+          "Phường 18"
+        ]
+      },
+      {
+        "district": "Quận 5",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14"
+        ]
+      },
+      {
+        "district": "Quận 6",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14"
+        ]
+      },
+      {
+        "district": "Quận 7",
+        "wards": [
+          "Phường Tân Thuận Đông",
+          "Phường Tân Thuận Tây",
+          "Phường Tân Kiểng",
+          "Phường Tân Hưng",
+          "Phường Tân Quy",
+          "Phường Phú Thuận",
+          "Phường Bình Thuận",
+          "Phường Tân Phong",
+          "Phường Tân Phú"
+        ]
+      },
+      {
+        "district": "Quận 8",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15",
+          "Phường 16"
+        ]
+      },
+      {
+        "district": "Quận 9",
+        "wards": [
+          "Phường Long Bình",
+          "Phường Long Phước",
+          "Phường Long Thạnh Mỹ",
+          "Phường Long Trường",
+          "Phường Phú Hữu",
+          "Phường Hiệp Phú",
+          "Phường Trường Thạnh",
+          "Phường Phước Bình",
+          "Phường Phước Long A",
+          "Phường Phước Long B",
+          "Phường Tăng Nhơn Phú A",
+          "Phường Tăng Nhơn Phú B",
+          "Phường Tân Phú",
+          "Phường Long Phú"
+        ]
+      },
+      {
+        "district": "Quận 10",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15"
+        ]
+      },
+      {
+        "district": "Quận 11",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15"
+        ]
+      },
+      {
+        "district": "Quận 12",
+        "wards": [
+          "Phường An Phú Đông",
+          "Phường Đông Hưng Thuận",
+          "Phường Hiệp Thành",
+          "Phường Tân Chánh Hiệp",
+          "Phường Tân Hưng Thuận",
+          "Phường Tân Thới Hiệp",
+          "Phường Tân Thới Nhất",
+          "Phường Thạnh Lộc",
+          "Phường Thạnh Xuân",
+          "Phường Thới An",
+          "Phường Trung Mỹ Tây"
+        ]
+      },
+      {
+        "district": "Quận Bình Thạnh",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15",
+          "Phường 17",
+          "Phường 19",
+          "Phường 21",
+          "Phường 22",
+          "Phường 24",
+          "Phường 25",
+          "Phường 26",
+          "Phường 27",
+          "Phường 28"
+        ]
+      },
+      {
+        "district": "Quận Tân Bình",
+        "wards": [
+          "Phường 1",
+          "Phường 2",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15"
+        ]
+      },
+      {
+        "district": "Quận Tân Phú",
+        "wards": [
+          "Phường Hiệp Tân",
+          "Phường Hòa Thạnh",
+          "Phường Phú Thạnh",
+          "Phường Phú Thọ Hòa",
+          "Phường Phú Trung",
+          "Phường Sơn Kỳ",
+          "Phường Tân Qúy",
+          "Phường Tân Sơn Nhì",
+          "Phường Tân Thành",
+          "Phường Tân Thới Hòa",
+          "Phường Tây Thạnh"
+        ]
+      },
+      {
+        "district": "Quận Gò Vấp",
+        "wards": [
+          "Phường 1",
+          "Phường 3",
+          "Phường 4",
+          "Phường 5",
+          "Phường 6",
+          "Phường 7",
+          "Phường 8",
+          "Phường 9",
+          "Phường 10",
+          "Phường 11",
+          "Phường 12",
+          "Phường 13",
+          "Phường 14",
+          "Phường 15",
+          "Phường 16",
+          "Phường 17"
+        ]
+      },
+      {
+        "district": "Huyện Bình Chánh",
+        "wards": [
+          "Thị trấn Tân Túc",
+          "Xã Bình Chánh",
+          "Xã Bình Hưng",
+          "Xã Bình Lợi",
+          "Xã Đa Phước",
+          "Xã Hưng Long",
+          "Xã Lê Minh Xuân",
+          "Xã Phạm Văn Hai",
+          "Xã Phong Phú",
+          "Xã Quy Đức",
+          "Xã Tân Kiên",
+          "Xã Tân Nhựt",
+          "Xã Tân Quý Tây",
+          "Xã Vĩnh Lộc A",
+          "Xã Vĩnh Lộc B"
+        ]
+      },
+      {
+        "district": "Huyện Cần Giờ",
+        "wards": [
+          "Thị trấn Cần Thạnh",
+          "Xã An Thới Đông",
+          "Xã Bình Khánh",
+          "Xã Long Hòa",
+          "Xã Lý Nhơn",
+          "Xã Tam Thôn Hiệp",
+          "Xã Thạnh An"
+        ]
+      },
+      {
+        "district": "Huyện Củ Chi",
+        "wards": [
+          "Thị trấn Củ Chi",
+          "Xã An Nhơn Tây",
+          "Xã An Phú",
+          "Xã Bình Mỹ",
+          "Xã Hòa Phú",
+          "Xã Nhuận Đức",
+          "Xã Phạm Văn Cội",
+          "Xã Phú Hòa Đông",
+          "Xã Phú Mỹ Hưng",
+          "Xã Phước Hiệp",
+          "Xã Phước Thạnh",
+          "Xã Phước Vĩnh An",
+          "Xã Tân An Hội",
+          "Xã Tân Phú Trung",
+          "Xã Tân Thạnh Đông",
+          "Xã Tân Thạnh Tây",
+          "Xã Tân Thông Hội",
+          "Xã Thái Mỹ",
+          "Xã Trung An",
+          "Xã Trung Lập Hạ",
+          "Xã Trung Lập Thượng"
+        ]
+      },
+      {
+        "district": "Huyện Hóc Môn",
+        "wards": [
+          "Thị trấn Hóc Môn",
+          "Xã Bà Điểm",
+          "Xã Đông Thạnh",
+          "Xã Nhị Bình",
+          "Xã Tân Hiệp",
+          "Xã Tân Thới Nhì",
+          "Xã Tân Xuân",
+          "Xã Thới Tam Thôn",
+          "Xã Trung Chánh",
+          "Xã Xuân Thới Đông",
+          "Xã Xuân Thới Sơn",
+          "Xã Xuân Thới Thượng"
+        ]
+      },
+      {
+        "district": "Huyện Nhà Bè",
+        "wards": [
+          "Thị trấn Nhà Bè",
+          "Xã Hiệp Phước",
+          "Xã Long Thới",
+          "Xã Nhơn Đức",
+          "Xã Phú Xuân",
+          "Xã Phước Kiển",
+          "Xã Phước Lộc"
+        ]
+      }
+    ]
+  }
+  

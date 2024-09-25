@@ -17,6 +17,7 @@ import Shop from "./components/Shop";
 import Cart from "./components/Cart";
 import ServiceBooking from "./components/ServiceBooking";
 import OrderPage from "./components/OrderPage";
+import OrderBookingServiceManagement from "./components/OrderBookingServiceManagement";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
   AppBar,
@@ -65,6 +66,7 @@ function AdminMenu() {
         <MenuItem component={Link} to="/add-service">
           Quản lý dịch vụ
         </MenuItem>
+        <MenuItem component={Link} to="/order-booking-service-history">Quản lý lịch sử đơn hàng dịch vụ</MenuItem>
       </Menu>
     </div>
   );
@@ -218,6 +220,10 @@ function AppContent() {
                 element={<AddServiceCategory />}
               />
               <Route path="/add-service" element={<AddService />} />
+              <Route
+                path="/order-booking-service-history"
+                element={<OrderBookingServiceManagement />}
+              />
             </>
           )}
 

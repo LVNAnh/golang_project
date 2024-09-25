@@ -65,5 +65,10 @@ func SetupRoutes() *mux.Router {
 	router.Handle("/selecteditems/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateSelectedItems), Middleware.Customer)).Methods("POST")
 	router.Handle("/selecteditems/clear", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.ClearSelectedItems), Middleware.Customer)).Methods("DELETE")
 
+	// OrderBookingService routes
+	router.Handle("/orderbookingservice", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateOrderBookingService), Middleware.Customer)).Methods("POST")
+	router.Handle("/orderbookingservices", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetOrderBookingServices), Middleware.Customer)).Methods("GET")
+	router.Handle("/orderbookingservice/{id}/status", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateOrderBookingServiceStatus), Middleware.Admin)).Methods("PATCH")
+
 	return router
 }

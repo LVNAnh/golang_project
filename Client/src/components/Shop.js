@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import CloseIcon from "@mui/icons-material/Close"; // For close button in dialog
+import CloseIcon from "@mui/icons-material/Close";
 
 function Shop({ updateCartCount }) {
   const [products, setProducts] = useState([]);
@@ -25,7 +25,6 @@ function Shop({ updateCartCount }) {
   const [selectedImage, setSelectedImage] = useState("");
   const navigate = useNavigate();
 
-  // Fetch products from the server
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -39,11 +38,10 @@ function Shop({ updateCartCount }) {
     fetchProducts();
   }, []);
 
-  // Function to add product to cart
   const handleAddToCart = async (product) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login"); // Điều hướng đến trang đăng nhập nếu chưa có token
+      navigate("/login");
       return;
     }
 
@@ -54,7 +52,7 @@ function Shop({ updateCartCount }) {
         cartItem,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -70,18 +68,15 @@ function Shop({ updateCartCount }) {
     updateCartCount();
   };
 
-  // Close Snackbar
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
 
-  // Open image in full size modal
   const handleClickImage = (imageUrl) => {
     setSelectedImage(imageUrl);
     setOpenDialog(true);
   };
 
-  // Close full-size image modal
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedImage("");
@@ -111,13 +106,13 @@ function Shop({ updateCartCount }) {
                     objectFit: "cover",
                     width: "100%",
                     height: "250px",
-                    cursor: "pointer", // Thêm con trỏ trỏ khi hover vào ảnh
+                    cursor: "pointer", 
                   }}
                   onClick={() =>
                     handleClickImage(
                       `http://localhost:8080/${product.imageurl}`
                     )
-                  } // Mở ảnh lớn khi click
+                  } 
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="div">
@@ -147,7 +142,6 @@ function Shop({ updateCartCount }) {
         )}
       </Grid>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
@@ -159,7 +153,6 @@ function Shop({ updateCartCount }) {
         </Alert>
       </Snackbar>
 
-      {/* Dialog for full-size image */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -176,7 +169,7 @@ function Shop({ updateCartCount }) {
           <img
             src={selectedImage}
             alt="Full view"
-            style={{ width: "100%", height: "auto" }}
+            style={{ width: "50%", height: "auto" }}
           />
         </DialogContent>
       </Dialog>
