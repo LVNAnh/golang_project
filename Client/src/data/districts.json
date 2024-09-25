@@ -278,6 +278,21 @@
         ]
       },
       {
+        "district": "Quận Bình Tân ",
+        "wards": [
+          "Phường Bình Hưng Hòa",
+          "Phường Bình Hưng Hòa A",
+          "Phường Bình Hưng Hòa B",
+          "Phường Bình Trị Đông",
+          "Phường Bình Trị Đông A",
+          "Phường Bình Trị Đông B",
+          "Phường Tân Tạo",
+          "Phường Tân Tạo A",
+          "Phường An Lạc",
+          "Phường An Lạc A"
+        ]
+      },
+      {
         "district": "Quận Gò Vấp",
         "wards": [
           "Phường 1",

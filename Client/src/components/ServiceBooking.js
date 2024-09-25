@@ -111,7 +111,7 @@ function ServiceBooking() {
         service_id: selectedService.id,
         contact_name: contactName,
         contact_phone: contactPhone,
-        address: `${addressNumber}, ${selectedDistrict}, ${selectedWard}`, // Địa chỉ kết hợp
+        address: `${addressNumber}, ${selectedWard}, ${selectedDistrict}`, // Địa chỉ kết hợp
         note: note,
         quantity: 1, // Assume 1 for now, you can customize this
       };
