@@ -22,7 +22,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "axios";
 
-// Import JSON từ tập tin
 import districtsData from "../data/districts.json";
 
 function ServiceBooking() {
@@ -36,15 +35,13 @@ function ServiceBooking() {
 
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
-  const [addressNumber, setAddressNumber] = useState(""); // Số nhà và tên đường
+  const [addressNumber, setAddressNumber] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedWard, setSelectedWard] = useState("");
   const [note, setNote] = useState("");
 
-  // Lấy dữ liệu từ districts.json
   const districts = districtsData["TP.HCM"];
 
-  // Fetch services from the server
   useEffect(() => {
     const fetchServices = async () => {
       try {
@@ -58,46 +55,38 @@ function ServiceBooking() {
     fetchServices();
   }, []);
 
-  // Khi chọn quận/huyện, đặt lại danh sách phường/xã tương ứng
   const handleDistrictChange = (event) => {
     setSelectedDistrict(event.target.value);
-    setSelectedWard(""); // Reset phường khi quận thay đổi
+    setSelectedWard(""); 
   };
 
-  // Function to handle booking
   const handleBooking = (service) => {
     setSelectedService(service);
     setOpenFormDialog(true);
   };
 
-  // Close Snackbar
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
 
-  // Open Dialog to show full image
   const handleClickImage = (imageUrl) => {
     setSelectedImage(imageUrl);
     setOpenDialog(true);
   };
 
-  // Close Dialog
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedImage("");
   };
 
-  // Close Form Dialog
   const handleCloseFormDialog = () => {
     setOpenFormDialog(false);
     setSelectedService(null);
   };
 
-  // Function to handle form submission
   const handleFormSubmit = async () => {
     if (!selectedService) return;
 
-    // Lấy token từ localStorage
     const token = localStorage.getItem("token");
     if (!token) {
       setSnackbarMessage("Bạn cần đăng nhập để đặt dịch vụ.");
@@ -105,15 +94,15 @@ function ServiceBooking() {
       return;
     }
 
-    // Gửi yêu cầu đặt dịch vụ với Authorization header
+
     try {
       const bookingData = {
         service_id: selectedService.id,
         contact_name: contactName,
         contact_phone: contactPhone,
-        address: `${addressNumber}, ${selectedWard}, ${selectedDistrict}`, // Địa chỉ kết hợp
+        address: `${addressNumber}, ${selectedWard}, ${selectedDistrict}`,
         note: note,
-        quantity: 1, // Assume 1 for now, you can customize this
+        quantity: 1,
       };
 
       const response = await axios.post(
@@ -121,7 +110,7 @@ function ServiceBooking() {
         bookingData,
         {
           headers: {
-            Authorization: token, // Gửi kèm token trong header
+            Authorization: token, 
           },
         }
       );
@@ -148,7 +137,6 @@ function ServiceBooking() {
           services.map((service) => (
             <Grid item xs={12} sm={6} md={3} key={service.id}>
               <Card>
-                {/* Thêm hình ảnh dịch vụ */}
                 <CardMedia
                   component="img"
                   height="250"
@@ -158,13 +146,13 @@ function ServiceBooking() {
                     objectFit: "cover",
                     width: "100%",
                     height: "250px",
-                    cursor: "pointer", // Con trỏ thay đổi khi hover vào ảnh
+                    cursor: "pointer", 
                   }}
                   onClick={() =>
                     handleClickImage(
                       `http://localhost:8080/${service.imageurl}`
                     )
-                  } // Click để mở ảnh lớn
+                  } 
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="div">
@@ -191,8 +179,6 @@ function ServiceBooking() {
           </Typography>
         )}
       </Grid>
-
-      {/* Booking Form Dialog */}
       <Dialog open={openFormDialog} onClose={handleCloseFormDialog}>
         <DialogContent>
           <Typography variant="h6" gutterBottom>
@@ -212,7 +198,6 @@ function ServiceBooking() {
             onChange={(e) => setContactPhone(e.target.value)}
             sx={{ mb: 2 }}
           />
-          {/* Nhập số nhà và tên đường */}
           <TextField
             label="Số nhà và tên đường"
             fullWidth
@@ -220,7 +205,6 @@ function ServiceBooking() {
             onChange={(e) => setAddressNumber(e.target.value)}
             sx={{ mb: 2 }}
           />
-          {/* Select quận/huyện */}
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Chọn quận/huyện</InputLabel>
             <Select value={selectedDistrict} onChange={handleDistrictChange}>
@@ -231,7 +215,6 @@ function ServiceBooking() {
               ))}
             </Select>
           </FormControl>
-          {/* Select phường/xã */}
           <FormControl fullWidth sx={{ mb: 2 }}>
             <InputLabel>Chọn phường/xã</InputLabel>
             <Select
@@ -272,7 +255,6 @@ function ServiceBooking() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
@@ -284,7 +266,6 @@ function ServiceBooking() {
         </Alert>
       </Snackbar>
 
-      {/* Dialog for full-screen image */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -306,7 +287,6 @@ function ServiceBooking() {
         </DialogContent>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={openSnackbar}
         autoHideDuration={3000}
