@@ -2,59 +2,52 @@ package Controllers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"Server/Middleware"
 	"Server/Models"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Collection getter
 func getCollection(name string) *mongo.Collection {
 	return Database.Collection(name)
 }
 
-// Create a new product category
-func CreateProductCategory(w http.ResponseWriter, r *http.Request) {
-	// Middleware kiểm tra quyền Admin hoặc Staff
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func CreateProductCategory(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	if claims.Role > Middleware.Staff {
-		http.Error(w, "You do not have permission to create a product category", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to create a product category"})
 		return
 	}
 
 	var productCategory Models.ProductCategory
-	err := json.NewDecoder(r.Body).Decode(&productCategory)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&productCategory); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	productCategory.ID = primitive.NewObjectID()
 
 	collection := getCollection("product_categories")
-	_, err = collection.InsertOne(context.Background(), productCategory)
+	_, err := collection.InsertOne(context.Background(), productCategory)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(productCategory)
+	c.JSON(http.StatusOK, productCategory)
 }
 
-// Get all product categories
-func GetAllProductCategories(w http.ResponseWriter, r *http.Request) {
+func GetAllProductCategories(c *gin.Context) {
 	var productCategories []Models.ProductCategory
 	collection := getCollection("product_categories")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer cursor.Close(context.Background())
@@ -65,53 +58,45 @@ func GetAllProductCategories(w http.ResponseWriter, r *http.Request) {
 		productCategories = append(productCategories, productCategory)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(productCategories)
+	c.JSON(http.StatusOK, productCategories)
 }
 
-// Get a product category by ID
-func GetProductCategoryByID(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+func GetProductCategoryByID(c *gin.Context) {
+	id := c.Param("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var productCategory Models.ProductCategory
 	collection := getCollection("product_categories")
-	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&productCategory)
+	err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&productCategory)
 	if err != nil {
-		http.Error(w, "Product category not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product category not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(productCategory)
+	c.JSON(http.StatusOK, productCategory)
 }
 
-// Update a product category by ID
-func UpdateProductCategory(w http.ResponseWriter, r *http.Request) {
-	// Middleware kiểm tra quyền Admin hoặc Staff
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func UpdateProductCategory(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	if claims.Role > Middleware.Staff {
-		http.Error(w, "You do not have permission to update a product category", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to update a product category"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id := params["id"]
-
+	id := c.Param("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var productCategory Models.ProductCategory
-	err = json.NewDecoder(r.Body).Decode(&productCategory)
-	if err != nil {
-		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&productCategory); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
 		return
 	}
 
@@ -122,48 +107,43 @@ func UpdateProductCategory(w http.ResponseWriter, r *http.Request) {
 	}}
 	result, err := collection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		http.Error(w, "Product category not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product category not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(productCategory)
+	c.JSON(http.StatusOK, productCategory)
 }
 
-// Delete a product category by ID
-func DeleteProductCategory(w http.ResponseWriter, r *http.Request) {
-	// Middleware kiểm tra quyền Admin
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func DeleteProductCategory(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	if claims.Role != Middleware.Admin {
-		http.Error(w, "You do not have permission to delete a product category", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to delete a product category"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id := params["id"]
-
+	id := c.Param("id")
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	collection := getCollection("product_categories")
 	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": objectID})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if result.DeletedCount == 0 {
-		http.Error(w, "Product category not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product category not found"})
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	c.Status(http.StatusNoContent)
 }

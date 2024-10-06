@@ -54,7 +54,7 @@ function AddProduct() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/products");
+      const response = await axios.get("http://localhost:8080/api/products");
       setProducts(response.data);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -64,7 +64,7 @@ function AddProduct() {
   const fetchProductCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/productcategories"
+        "http://localhost:8080/api/productcategories"
       );
       setProductCategories(response.data || []);
     } catch (error) {
@@ -140,10 +140,10 @@ function AddProduct() {
     }
 
     try {
-      await axios.post("http://localhost:8080/product", formDataToSend, {
+      await axios.post("http://localhost:8080/api/product", formDataToSend, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${getToken()}`, // Thêm token vào header
+          Authorization: `Bearer ${getToken()}`,
         },
       });
       setSnackbar({
@@ -178,12 +178,12 @@ function AddProduct() {
 
     try {
       await axios.put(
-        `http://localhost:8080/product/${editProductId}`,
+        `http://localhost:8080/api/product/${editProductId}`,
         formDataToSend,
         {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${getToken()}`, // Thêm token vào header
+            Authorization: `Bearer ${getToken()}`,
           },
         }
       );
@@ -223,11 +223,14 @@ function AddProduct() {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8080/product/${deleteProductId}`, {
-        headers: {
-          Authorization: `Bearer ${getToken()}`, // Thêm token vào header
-        },
-      });
+      await axios.delete(
+        `http://localhost:8080/api/product/${deleteProductId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        }
+      );
       setSnackbar({
         open: true,
         message: "Sản phẩm đã được xóa!",
@@ -288,27 +291,25 @@ function AddProduct() {
     <div>
       <h2>Quản lý sản phẩm</h2>
 
-      {/* Thêm button để mở Dialog thêm sản phẩm */}
       <Button
         variant="contained"
         color="primary"
         onClick={() => {
-          setShowDialog(true); // Mở dialog
-          setEditMode(false); // Đặt chế độ thành thêm mới sản phẩm
+          setShowDialog(true);
+          setEditMode(false);
           setFormData({
             name: "",
             price: "",
             stock: "",
             productcategory: "",
             image: null,
-          }); // Reset dữ liệu form để tránh hiện dữ liệu cũ
+          });
         }}
         style={{ marginBottom: "20px" }}
       >
         Thêm Sản Phẩm
       </Button>
 
-      {/* Bộ lọc và sắp xếp */}
       <div style={{ marginBottom: "20px", display: "flex", gap: "20px" }}>
         <FormControl style={{ minWidth: 200 }}>
           <InputLabel id="filter-category-label">Lọc theo danh mục</InputLabel>
@@ -339,7 +340,6 @@ function AddProduct() {
         </FormControl>
       </div>
 
-      {/* Bảng sản phẩm */}
       <TableContainer>
         <Table>
           <TableHead>
@@ -402,7 +402,6 @@ function AddProduct() {
         </Table>
       </TableContainer>
 
-      {/* Phân trang */}
       {totalPages > 1 && (
         <Pagination
           count={totalPages}
@@ -418,7 +417,6 @@ function AddProduct() {
         />
       )}
 
-      {/* Dialog thêm/cập nhật sản phẩm */}
       <Dialog open={showDialog} onClose={handleCloseDialog}>
         <DialogTitle>
           {editMode ? "Cập nhật sản phẩm" : "Thêm sản phẩm"}
@@ -473,7 +471,6 @@ function AddProduct() {
             )}
           </Select>
 
-          {/* Input để chọn ảnh */}
           <InputLabel style={{ marginTop: "10px" }}>
             Hình ảnh sản phẩm
           </InputLabel>
@@ -489,7 +486,6 @@ function AddProduct() {
         </DialogActions>
       </Dialog>
 
-      {/* Confirm delete dialog */}
       <Dialog
         open={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
@@ -508,7 +504,6 @@ function AddProduct() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

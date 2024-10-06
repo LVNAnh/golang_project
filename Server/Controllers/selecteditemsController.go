@@ -2,63 +2,55 @@ package Controllers
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
 	"Server/Middleware"
 	"Server/Models"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Lấy collection selected_items
 func getSelectedItemsCollection() *mongo.Collection {
 	return Database.Collection("selected_items")
 }
 
-// Thêm sản phẩm vào SelectedItems
-func AddToSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func AddToSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	var selectedItem Models.SelectedItem
-	err := json.NewDecoder(r.Body).Decode(&selectedItem)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&selectedItem); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Tìm kiếm thông tin sản phẩm từ collection products
 	productCollection := getProductCollection()
 	var product Models.Product
-	err = productCollection.FindOne(context.Background(), bson.M{"_id": selectedItem.ProductID}).Decode(&product)
-	if err != nil {
-		http.Error(w, "Product not found", http.StatusNotFound)
+	if err := productCollection.FindOne(context.Background(), bson.M{"_id": selectedItem.ProductID}).Decode(&product); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	// Bổ sung thêm tên và imageURL vào selectedItem
 	selectedItem.Name = product.Name
 	selectedItem.ImageURL = product.ImageURL
 
-	// Tìm kiếm hoặc tạo mới selected_items
 	collection := getSelectedItemsCollection()
 	var selectedItems Models.SelectedItems
-	err = collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems)
-
-	if err == mongo.ErrNoDocuments {
-		// Tạo mới danh sách selected items
+	if err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems); err == mongo.ErrNoDocuments {
 		selectedItems = Models.SelectedItems{
 			UserID:    userID,
 			Items:     []Models.SelectedItem{selectedItem},
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		_, err = collection.InsertOne(context.Background(), selectedItems)
+		if _, err := collection.InsertOne(context.Background(), selectedItems); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add to selected items"})
+			return
+		}
 	} else {
-		// Cập nhật selected_items nếu đã tồn tại
 		exists := false
 		for i, item := range selectedItems.Items {
 			if item.ProductID == selectedItem.ProductID {
@@ -71,57 +63,45 @@ func AddToSelectedItems(w http.ResponseWriter, r *http.Request) {
 			selectedItems.Items = append(selectedItems.Items, selectedItem)
 		}
 		selectedItems.UpdatedAt = time.Now()
-		_, err = collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems})
+		if _, err := collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update selected items"})
+			return
+		}
 	}
-
-	if err != nil {
-		http.Error(w, "Failed to add to selected items", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(selectedItems)
+	c.JSON(http.StatusOK, selectedItems)
 }
 
-// Lấy danh sách sản phẩm đã chọn (SelectedItems)
-func GetSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func GetSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	collection := getSelectedItemsCollection()
 	var selectedItems Models.SelectedItems
-	err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems)
-
-	if err != nil {
-		http.Error(w, "Selected items not found", http.StatusNotFound)
+	if err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Selected items not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(selectedItems)
+	c.JSON(http.StatusOK, selectedItems)
 }
 
-// Cập nhật số lượng sản phẩm trong SelectedItems
-func UpdateSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func UpdateSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	var selectedItem Models.SelectedItem
-	err := json.NewDecoder(r.Body).Decode(&selectedItem)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&selectedItem); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	collection := getSelectedItemsCollection()
 	var selectedItems Models.SelectedItems
-	err = collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems)
-	if err != nil {
-		http.Error(w, "Selected items not found", http.StatusNotFound)
+	if err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Selected items not found"})
 		return
 	}
 
-	// Cập nhật số lượng sản phẩm
 	for i, item := range selectedItems.Items {
 		if item.ProductID == selectedItem.ProductID {
 			selectedItems.Items[i].Quantity = selectedItem.Quantity
@@ -130,38 +110,31 @@ func UpdateSelectedItems(w http.ResponseWriter, r *http.Request) {
 	}
 	selectedItems.UpdatedAt = time.Now()
 
-	_, err = collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems})
-
-	if err != nil {
-		http.Error(w, "Failed to update selected items", http.StatusInternalServerError)
+	if _, err := collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update selected items"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(selectedItems)
+	c.JSON(http.StatusOK, selectedItems)
 }
 
-// Xóa sản phẩm khỏi SelectedItems khi user uncheck
-func RemoveFromSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func RemoveFromSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	var selectedItem Models.SelectedItem
-	err := json.NewDecoder(r.Body).Decode(&selectedItem)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&selectedItem); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
 	collection := getSelectedItemsCollection()
 	var selectedItems Models.SelectedItems
-	err = collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems)
-	if err != nil {
-		http.Error(w, "Selected items not found", http.StatusNotFound)
+	if err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems); err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Selected items not found"})
 		return
 	}
 
-	// Xóa sản phẩm khỏi danh sách selected_items
 	for i, item := range selectedItems.Items {
 		if item.ProductID == selectedItem.ProductID {
 			selectedItems.Items = append(selectedItems.Items[:i], selectedItems.Items[i+1:]...)
@@ -169,73 +142,62 @@ func RemoveFromSelectedItems(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Cập nhật lại selected_items sau khi xóa
 	if len(selectedItems.Items) == 0 {
-		_, err = collection.DeleteOne(context.Background(), bson.M{"user_id": userID})
+		if _, err := collection.DeleteOne(context.Background(), bson.M{"user_id": userID}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete selected items"})
+			return
+		}
 	} else {
 		selectedItems.UpdatedAt = time.Now()
-		_, err = collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems})
+		if _, err := collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": selectedItems}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update selected items"})
+			return
+		}
 	}
 
-	if err != nil {
-		http.Error(w, "Failed to update selected items", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	c.JSON(http.StatusOK, gin.H{
 		"message": "Product removed from selected items",
-		"items":   selectedItems, // Trả về danh sách đã cập nhật
+		"items":   selectedItems,
 	})
 }
 
-// Xóa toàn bộ sản phẩm trong SelectedItems sau khi đặt hàng thành công
-func ClearSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func ClearSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	collection := getSelectedItemsCollection()
-	_, err := collection.DeleteOne(context.Background(), bson.M{"user_id": userID})
-
-	if err != nil {
-		http.Error(w, "Failed to clear selected items", http.StatusInternalServerError)
+	if _, err := collection.DeleteOne(context.Background(), bson.M{"user_id": userID}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to clear selected items"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Selected items cleared",
-	})
+	c.JSON(http.StatusOK, gin.H{"message": "Selected items cleared"})
 }
 
-// Thêm nhiều sản phẩm vào SelectedItems
-func AddMultipleToSelectedItems(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func AddMultipleToSelectedItems(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	var selectedItems []Models.SelectedItem
-	err := json.NewDecoder(r.Body).Decode(&selectedItems)
-	if err != nil {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if err := c.ShouldBindJSON(&selectedItems); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Tìm kiếm hoặc tạo mới selected_items
 	collection := getSelectedItemsCollection()
 	var existingSelectedItems Models.SelectedItems
-	err = collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&existingSelectedItems)
-
-	if err == mongo.ErrNoDocuments {
-		// Tạo mới danh sách selected items
+	if err := collection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&existingSelectedItems); err == mongo.ErrNoDocuments {
 		newSelectedItems := Models.SelectedItems{
 			UserID:    userID,
 			Items:     selectedItems,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		}
-		_, err = collection.InsertOne(context.Background(), newSelectedItems)
+		if _, err := collection.InsertOne(context.Background(), newSelectedItems); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add selected items"})
+			return
+		}
 	} else {
-		// Cập nhật selected_items nếu đã tồn tại
 		updatedItems := existingSelectedItems.Items
 		for _, newItem := range selectedItems {
 			exists := false
@@ -252,16 +214,13 @@ func AddMultipleToSelectedItems(w http.ResponseWriter, r *http.Request) {
 		}
 		existingSelectedItems.Items = updatedItems
 		existingSelectedItems.UpdatedAt = time.Now()
-		_, err = collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": existingSelectedItems})
+		if _, err := collection.UpdateOne(context.Background(), bson.M{"user_id": userID}, bson.M{"$set": existingSelectedItems}); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update selected items"})
+			return
+		}
 	}
 
-	if err != nil {
-		http.Error(w, "Failed to add multiple selected items", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	c.JSON(http.StatusOK, gin.H{
 		"message": "Items added successfully",
 		"items":   existingSelectedItems.Items,
 	})

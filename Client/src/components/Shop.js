@@ -28,7 +28,7 @@ function Shop({ updateCartCount }) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/products");
+        const response = await axios.get("http://localhost:8080/api/products");
         setProducts(response.data);
       } catch (error) {
         console.error("Error fetching products", error);
@@ -48,7 +48,7 @@ function Shop({ updateCartCount }) {
     try {
       const cartItem = { product_id: product.id, quantity: 1 };
       const response = await axios.post(
-        "http://localhost:8080/cart/add",
+        "http://localhost:8080/api/cart/add",
         cartItem,
         {
           headers: {
@@ -106,13 +106,13 @@ function Shop({ updateCartCount }) {
                     objectFit: "cover",
                     width: "100%",
                     height: "250px",
-                    cursor: "pointer", 
+                    cursor: "pointer",
                   }}
                   onClick={() =>
                     handleClickImage(
                       `http://localhost:8080/${product.imageurl}`
                     )
-                  } 
+                  }
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="div">

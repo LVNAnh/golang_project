@@ -2,8 +2,6 @@ package Controllers
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,97 +10,73 @@ import (
 	"Server/Middleware"
 	"Server/Models"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Create a new product
-// CreateProduct handles adding a new product
-func CreateProduct(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func CreateProduct(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền tạo sản phẩm (Admin hoặc Staff)
 	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
-		http.Error(w, "You are not authorized to create products", http.StatusForbidden)
+		c.JSON(403, gin.H{"error": "You are not authorized to create products"})
 		return
 	}
 
 	var product Models.Product
 
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20) // Giới hạn kích thước file 10 MB
+	err := c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Could not parse multipart form"})
 		return
 	}
 
-	// Lấy file từ form
-	file, handler, err := r.FormFile("image")
+	file, err := c.FormFile("image")
 	if err != nil {
-		http.Error(w, "Could not get file from form", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Could not get file from form"})
 		return
 	}
-	defer file.Close()
 
-	// Tạo đường dẫn đến folder 'uploads/images'
 	uploadPath := filepath.Join("uploads", "images")
-	os.MkdirAll(uploadPath, os.ModePerm) // Tạo folder nếu chưa tồn tại
-
-	// Tạo file với tên ban đầu của file tải lên
-	filePath := filepath.Join(uploadPath, handler.Filename)
-	tempFile, err := os.Create(filePath)
-	if err != nil {
-		http.Error(w, "Could not create file", http.StatusInternalServerError)
-		return
-	}
-	defer tempFile.Close()
-
-	// Copy nội dung của file tải lên vào file mới tạo
-	_, err = io.Copy(tempFile, file)
-	if err != nil {
-		http.Error(w, "Could not save file", http.StatusInternalServerError)
+	if err := os.MkdirAll(uploadPath, os.ModePerm); err != nil {
+		c.JSON(500, gin.H{"error": "Could not create upload directory"})
 		return
 	}
 
-	// Lưu đường dẫn tương đối tới hình ảnh vào database
-	product.ImageURL = filepath.ToSlash(filepath.Join("/uploads/images", handler.Filename))
+	filePath := filepath.Join(uploadPath, file.Filename)
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
+		c.JSON(500, gin.H{"error": "Could not save file"})
+		return
+	}
 
-	// Lấy các thông tin khác từ form
-	product.Name = r.FormValue("name")
-	product.Price, _ = strconv.ParseFloat(r.FormValue("price"), 64)
-	product.Stock, _ = strconv.Atoi(r.FormValue("stock"))
-	product.ProductCategory, _ = primitive.ObjectIDFromHex(r.FormValue("productcategory"))
+	product.ImageURL = filepath.ToSlash(filepath.Join("uploads/images", file.Filename))
+	product.Name = c.PostForm("name")
+	product.Price, _ = strconv.ParseFloat(c.PostForm("price"), 64)
+	product.Stock, _ = strconv.Atoi(c.PostForm("stock"))
+	product.ProductCategory, _ = primitive.ObjectIDFromHex(c.PostForm("productcategory"))
 
-	// Validate product fields
 	if product.Name == "" || product.Price <= 0 || product.Stock <= 0 {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Tạo ID mới cho sản phẩm
 	product.ID = primitive.NewObjectID()
 
-	// Lưu sản phẩm vào database
 	collection := getCollection("products")
-	_, err = collection.InsertOne(context.Background(), product)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if _, err := collection.InsertOne(context.Background(), product); err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	c.JSON(200, product)
 }
 
-// Get all products
-func GetAllProducts(w http.ResponseWriter, r *http.Request) {
+func GetAllProducts(c *gin.Context) {
 	var products []Models.Product
 	collection := getCollection("products")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 	defer cursor.Close(context.Background())
@@ -113,119 +87,95 @@ func GetAllProducts(w http.ResponseWriter, r *http.Request) {
 		products = append(products, product)
 	}
 
-	// Set Content-Type and return the products as JSON
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	c.JSON(200, products)
 }
 
-// Get a product by ID
-func GetProductByID(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+func GetProductByID(c *gin.Context) {
+	id := c.Param("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var product Models.Product
 	collection := getCollection("products")
-	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&product)
-	if err != nil {
-		http.Error(w, "Product not found", http.StatusNotFound)
+	if err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&product); err != nil {
+		c.JSON(404, gin.H{"error": "Product not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	c.JSON(200, product)
 }
 
-// Update a product by ID
-func UpdateProduct(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func UpdateProduct(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền cập nhật sản phẩm (Admin hoặc Staff)
 	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
-		http.Error(w, "You are not authorized to update products", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to update products"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+	id := c.Param("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var existingProduct Models.Product
 	collection := getCollection("products")
-
-	// Tìm sản phẩm hiện tại
-	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&existingProduct)
+	err = collection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&existingProduct)
 	if err != nil {
-		http.Error(w, "Product not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	// Parse multipart form
-	err = r.ParseMultipartForm(10 << 20) // 10 MB
+	err = c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse multipart form"})
 		return
 	}
 
-	// Get file from form (nếu có file được tải lên)
-	file, handler, err := r.FormFile("image")
+	file, err := c.FormFile("image")
 	if err == nil {
-		defer file.Close()
-
-		// Tạo đường dẫn đến folder uploads/images
 		uploadPath := filepath.Join("uploads", "images")
-		os.MkdirAll(uploadPath, os.ModePerm) // Đảm bảo folder tồn tại
-
-		// Tạo file với tên ban đầu của file tải lên
-		filePath := filepath.Join(uploadPath, handler.Filename)
-		tempFile, err := os.Create(filePath)
+		err = os.MkdirAll(uploadPath, os.ModePerm)
 		if err != nil {
-			http.Error(w, "Could not create file", http.StatusInternalServerError)
-			return
-		}
-		defer tempFile.Close()
-
-		// Copy nội dung của file tải lên vào file mới tạo
-		_, err = io.Copy(tempFile, file)
-		if err != nil {
-			http.Error(w, "Could not save file", http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create upload directory"})
 			return
 		}
 
-		// Cập nhật đường dẫn ảnh
-		existingProduct.ImageURL = filePath
+		filePath := filepath.Join(uploadPath, file.Filename)
+		err = c.SaveUploadedFile(file, filePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save file"})
+			return
+		}
+
+		existingProduct.ImageURL = filepath.ToSlash(filepath.Join("uploads/images", file.Filename))
 	}
 
-	// Cập nhật các trường khác từ form
-	if name := r.FormValue("name"); name != "" {
+	if name := c.PostForm("name"); name != "" {
 		existingProduct.Name = name
 	}
-	if price, err := strconv.ParseFloat(r.FormValue("price"), 64); err == nil && price > 0 {
+	if price, err := strconv.ParseFloat(c.PostForm("price"), 64); err == nil && price > 0 {
 		existingProduct.Price = price
 	}
-	if stock, err := strconv.Atoi(r.FormValue("stock")); err == nil && stock >= 0 {
+	if stock, err := strconv.Atoi(c.PostForm("stock")); err == nil && stock >= 0 {
 		existingProduct.Stock = stock
 	}
-	if category := r.FormValue("productcategory"); category != "" {
+	if category := c.PostForm("productcategory"); category != "" {
 		if productCategory, err := primitive.ObjectIDFromHex(category); err == nil {
 			existingProduct.ProductCategory = productCategory
 		}
 	}
 
-	// Validate các trường của sản phẩm
-	if existingProduct.Name == "" || existingProduct.Price <= 0 || existingProduct.Stock <= 0 {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+	if existingProduct.Name == "" || existingProduct.Price <= 0 || existingProduct.Stock < 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Cập nhật sản phẩm trong database
 	update := bson.M{
 		"$set": bson.M{
 			"name":            existingProduct.Name,
@@ -236,50 +186,40 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	result, err := collection.UpdateOne(context.Background(), bson.M{"_id": id}, update)
+	result, err := collection.UpdateOne(context.Background(), bson.M{"_id": objectID}, update)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		http.Error(w, "Product not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingProduct)
+	c.JSON(http.StatusOK, existingProduct)
 }
 
-// Delete a product by ID
-func DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func DeleteProduct(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền xóa sản phẩm (chỉ cho Admin)
 	if claims.Role != Middleware.Admin {
-		http.Error(w, "You are not authorized to delete products", http.StatusForbidden)
+		c.JSON(403, gin.H{"error": "You are not authorized to delete products"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+	id := c.Param("id")
+	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(400, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	collection := getCollection("products")
-	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if result, err := collection.DeleteOne(context.Background(), bson.M{"_id": objectID}); err != nil || result.DeletedCount == 0 {
+		c.JSON(404, gin.H{"error": "Product not found"})
 		return
 	}
 
-	if result.DeletedCount == 0 {
-		http.Error(w, "Product not found", http.StatusNotFound)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	c.Status(204)
 }

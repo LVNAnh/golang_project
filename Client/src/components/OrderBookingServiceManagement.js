@@ -19,28 +19,25 @@ function OrderBookingServiceManagement() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch dữ liệu khi component được render lần đầu
   useEffect(() => {
-    fetchServices(); // Lấy danh sách dịch vụ
-    fetchOrderBookings(); // Lấy danh sách order booking
+    fetchServices();
+    fetchOrderBookings();
   }, []);
 
-  // Lấy danh sách dịch vụ
   const fetchServices = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/services");
+      const response = await axios.get("http://localhost:8080/api/services");
       setServices(response.data);
     } catch (error) {
       console.error("Error fetching services:", error);
     }
   };
 
-  // Lấy danh sách đơn hàng booking
   const fetchOrderBookings = async () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        "http://localhost:8080/orderbookingservices",
+        "http://localhost:8080/api/orderbookingservices",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -53,24 +50,22 @@ function OrderBookingServiceManagement() {
     }
   };
 
-  // Tìm tên dịch vụ dựa trên service_id
   const getServiceName = (serviceId) => {
     const service = services.find((s) => s.id === serviceId);
     return service ? service.name : "Không xác định";
   };
 
-  // Thay đổi trạng thái của đơn hàng
   const handleStatusChange = async (id, newStatus) => {
     try {
       const token = localStorage.getItem("token");
       await axios.patch(
-        `http://localhost:8080/orderbookingservice/${id}/status`,
+        `http://localhost:8080/api/orderbookingservice/${id}/status`,
         { status: newStatus },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      fetchOrderBookings(); // Cập nhật danh sách sau khi thay đổi trạng thái
+      fetchOrderBookings();
     } catch (error) {
       console.error("Error updating status:", error);
     }
@@ -90,8 +85,8 @@ function OrderBookingServiceManagement() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>STT</TableCell> {/* Hiển thị STT */}
-              <TableCell>Tên dịch vụ</TableCell> {/* Hiển thị tên dịch vụ */}
+              <TableCell>STT</TableCell>
+              <TableCell>Tên dịch vụ</TableCell>
               <TableCell>Số lượng</TableCell>
               <TableCell>Tổng giá</TableCell>
               <TableCell>Ngày đặt</TableCell>
@@ -101,9 +96,8 @@ function OrderBookingServiceManagement() {
           <TableBody>
             {orders.map((order, index) => (
               <TableRow key={order.id}>
-                <TableCell>{index + 1}</TableCell> {/* Hiển thị STT */}
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>{getServiceName(order.service_id)}</TableCell>{" "}
-                {/* Hiển thị tên dịch vụ */}
                 <TableCell>{order.quantity}</TableCell>
                 <TableCell>{order.total_price}</TableCell>
                 <TableCell>

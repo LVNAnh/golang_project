@@ -9,6 +9,6 @@ type Product struct {
 	Name            string             `bson:"name" json:"name"`
 	Price           float64            `bson:"price" json:"price"`
 	Stock           int                `bson:"stock" json:"stock"`
-	ProductCategory primitive.ObjectID `bson:"productcategory" json:"productcategory"` // Reference to ProductCategory
-	ImageURL        string             `bson:"imageurl" json:"imageurl"`               // Store image URL or path
+	ProductCategory primitive.ObjectID `bson:"productcategory" json:"productcategory"`
+	ImageURL        string             `bson:"imageurl" json:"imageurl"`
 }

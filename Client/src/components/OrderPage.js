@@ -22,12 +22,11 @@ function OrderPage() {
     severity: "success",
   });
 
-  // Gọi API để lấy danh sách selected items khi trang OrderPage được tải
   useEffect(() => {
     const fetchSelectedItems = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8080/selecteditems",
+          "http://localhost:8080/api/selecteditems",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -56,7 +55,6 @@ function OrderPage() {
     fetchSelectedItems();
   }, []);
 
-  // Tính tổng tiền đơn hàng
   const calculateTotalPrice = () => {
     const totalPrice = selectedProducts.reduce(
       (sum, item) => sum + item.price * item.quantity,
@@ -65,17 +63,14 @@ function OrderPage() {
     return totalPrice.toLocaleString();
   };
 
-  // Xác nhận đặt hàng
   const handleOrderConfirmation = () => {
     setOpenDialog(true);
   };
 
-  // Đặt hàng
   const handlePlaceOrder = async () => {
     try {
-      // Lấy các sản phẩm từ selected_items trước khi tạo đơn hàng
       const selectedItemsResponse = await axios.get(
-        "http://localhost:8080/selecteditems",
+        "http://localhost:8080/api/selecteditems",
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -83,7 +78,6 @@ function OrderPage() {
 
       const selectedProducts = selectedItemsResponse.data.items;
 
-      // Nếu không có sản phẩm nào được chọn, hiển thị thông báo lỗi
       if (!selectedProducts || selectedProducts.length === 0) {
         setSnackbar({
           open: true,
@@ -93,10 +87,9 @@ function OrderPage() {
         return;
       }
 
-      // Thực hiện gửi đơn hàng
       const orderResponse = await axios.post(
-        "http://localhost:8080/order",
-        { items: selectedProducts }, // Gửi danh sách sản phẩm đã chọn
+        "http://localhost:8080/api/order",
+        { items: selectedProducts },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -109,15 +102,13 @@ function OrderPage() {
           severity: "success",
         });
 
-        // Xóa các sản phẩm trong selected_items sau khi đặt hàng thành công
-        await axios.delete("http://localhost:8080/selecteditems/clear", {
+        await axios.delete("http://localhost:8080/api/selecteditems/clear", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
 
-        // Đóng dialog và điều hướng người dùng
         setOpenDialog(false);
         navigate("/shop");
-        window.location.reload(); // Tải lại trang để cập nhật
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error placing order", error);

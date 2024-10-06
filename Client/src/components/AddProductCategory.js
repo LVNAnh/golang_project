@@ -31,17 +31,15 @@ function AddProductCategory() {
     severity: "success",
   });
 
-  // Lấy token từ localStorage
   const token = localStorage.getItem("token");
 
-  // Fetch product categories from the server
   const fetchProductCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/productcategories",
+        "http://localhost:8080/api/productcategories",
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -55,17 +53,15 @@ function AddProductCategory() {
     fetchProductCategories();
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add new product category
   const handleAddCategory = async () => {
     try {
-      await axios.post("http://localhost:8080/productcategory", formData, {
+      await axios.post("http://localhost:8080/api/productcategory", formData, {
         headers: {
-          Authorization: `Bearer ${token}`, // Thêm token vào header
+          Authorization: `Bearer ${token}`,
         },
       });
       setSnackbar({
@@ -84,15 +80,14 @@ function AddProductCategory() {
     }
   };
 
-  // Update existing product category
   const handleUpdateCategory = async () => {
     try {
       await axios.put(
-        `http://localhost:8080/productcategory/${editCategoryId}`,
+        `http://localhost:8080/api/productcategory/${editCategoryId}`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -112,7 +107,6 @@ function AddProductCategory() {
     }
   };
 
-  // Handle submit based on mode (Add or Edit)
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editMode) {
@@ -122,10 +116,9 @@ function AddProductCategory() {
     }
   };
 
-  // Handle edit action
   const handleEdit = (category) => {
     setFormData({ name: category.name, description: category.description });
-    setEditCategoryId(category.id); // Sử dụng _id thay vì id để tương thích với MongoDB
+    setEditCategoryId(category.id);
     setEditMode(true);
     setShowDialog(true);
   };
@@ -136,10 +129,10 @@ function AddProductCategory() {
     ) {
       try {
         await axios.delete(
-          `http://localhost:8080/productcategory/${categoryId}`,
+          `http://localhost:8080/api/productcategory/${categoryId}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Thêm token vào header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -159,7 +152,6 @@ function AddProductCategory() {
     }
   };
 
-  // Reset form and close modal
   const handleCloseDialog = () => {
     setFormData({ name: "", description: "" });
     setEditMode(false);
@@ -174,24 +166,21 @@ function AddProductCategory() {
     <div>
       <h2>Quản lý danh mục sản phẩm</h2>
 
-      {/* Button to open modal for adding a new category */}
       <Button
         variant="contained"
         color="primary"
         onClick={() => {
-          setEditMode(false); // Đặt về chế độ thêm mới
+          setEditMode(false);
           setFormData({
-            // Đặt lại form về trạng thái ban đầu
             name: "",
             description: "",
           });
-          setShowDialog(true); // Mở Dialog để thêm danh mục sản phẩm mới
+          setShowDialog(true);
         }}
       >
         Thêm danh mục sản phẩm
       </Button>
 
-      {/* Product categories table */}
       <TableContainer>
         <Table>
           <TableHead>
@@ -236,7 +225,6 @@ function AddProductCategory() {
         </Table>
       </TableContainer>
 
-      {/* Dialog for adding/updating a product category */}
       <Dialog open={showDialog} onClose={handleCloseDialog}>
         <DialogTitle>
           {editMode ? "Cập nhật danh mục sản phẩm" : "Thêm danh mục sản phẩm"}
@@ -273,7 +261,6 @@ function AddProductCategory() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

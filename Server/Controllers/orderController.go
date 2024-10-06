@@ -2,37 +2,33 @@ package Controllers
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"time"
 
 	"Server/Middleware"
 	"Server/Models"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// Lấy collection cho đơn hàng
 func getOrderCollection() *mongo.Collection {
 	return Database.Collection("product_order")
 }
 
-// Tạo đơn hàng mới từ selected_items
-func CreateOrder(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func CreateOrder(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
-	// Lấy các sản phẩm từ selected_items
 	selectedItemsCollection := getSelectedItemsCollection()
 	var selectedItems Models.SelectedItems
 	err := selectedItemsCollection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&selectedItems)
 	if err == mongo.ErrNoDocuments {
-		http.Error(w, "No selected items found", http.StatusNotFound)
+		c.JSON(404, gin.H{"error": "No selected items found"})
 		return
 	}
 
-	// Lấy thông tin sản phẩm từ selected_items
 	productCollection := getProductCollection()
 	var orderItems []Models.OrderItem
 	totalPrice := 0.0
@@ -41,11 +37,10 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		var product Models.Product
 		err := productCollection.FindOne(context.Background(), bson.M{"_id": selectedItem.ProductID}).Decode(&product)
 		if err != nil {
-			http.Error(w, "Product not found", http.StatusNotFound)
+			c.JSON(404, gin.H{"error": "Product not found"})
 			return
 		}
 
-		// Tạo OrderItem từ SelectedItem và Product
 		orderItem := Models.OrderItem{
 			ProductID: selectedItem.ProductID,
 			Quantity:  selectedItem.Quantity,
@@ -58,7 +53,6 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 		totalPrice += product.Price * float64(selectedItem.Quantity)
 	}
 
-	// Tạo Order mới
 	order := Models.Order{
 		UserID:     userID,
 		Items:      orderItems,
@@ -70,31 +64,27 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	orderCollection := getOrderCollection()
 	_, err = orderCollection.InsertOne(context.Background(), order)
 	if err != nil {
-		http.Error(w, "Failed to create order", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "Failed to create order"})
 		return
 	}
 
-	// Sau khi tạo đơn hàng thành công, gọi API để xóa sản phẩm đã chọn khỏi giỏ hàng
 	cartCollection := getCartCollection()
 	var cart Models.Cart
 	err = cartCollection.FindOne(context.Background(), bson.M{"user_id": userID}).Decode(&cart)
 	if err == mongo.ErrNoDocuments {
-		http.Error(w, "Cart not found", http.StatusNotFound)
+		c.JSON(404, gin.H{"error": "Cart not found"})
 		return
 	}
 
-	// Xóa các sản phẩm đã được chọn ra khỏi giỏ hàng
 	for _, selectedItem := range selectedItems.Items {
 		for i, cartItem := range cart.Items {
 			if selectedItem.ProductID == cartItem.ProductID {
-				// Xóa sản phẩm khỏi giỏ hàng
 				cart.Items = append(cart.Items[:i], cart.Items[i+1:]...)
 				break
 			}
 		}
 	}
 
-	// Cập nhật giỏ hàng sau khi xóa các sản phẩm
 	if len(cart.Items) == 0 {
 		_, err = cartCollection.DeleteOne(context.Background(), bson.M{"user_id": userID})
 	} else {
@@ -103,40 +93,68 @@ func CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, "Failed to update cart after order", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "Failed to update cart after order"})
 		return
 	}
 
-	// Sau khi tạo đơn hàng, xóa selected_items của người dùng
 	_, err = selectedItemsCollection.DeleteOne(context.Background(), bson.M{"user_id": userID})
 	if err != nil {
-		http.Error(w, "Failed to clear selected items", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "Failed to clear selected items"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(order)
+	c.JSON(200, order)
 }
 
-// Lấy danh sách đơn hàng của người dùng
-func GetOrders(w http.ResponseWriter, r *http.Request) {
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func GetOrders(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 	userID := claims.ID
 
 	orderCollection := getOrderCollection()
 	var orders []Models.Order
 	cursor, err := orderCollection.Find(context.Background(), bson.M{"user_id": userID})
 	if err != nil {
-		http.Error(w, "Failed to get orders", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "Failed to get orders"})
 		return
 	}
 	defer cursor.Close(context.Background())
 
 	if err = cursor.All(context.Background(), &orders); err != nil {
-		http.Error(w, "Failed to decode orders", http.StatusInternalServerError)
+		c.JSON(500, gin.H{"error": "Failed to decode orders"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(orders)
+	c.JSON(200, orders)
+}
+
+func CancelOrder(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
+	orderID := c.Param("id")
+
+	objectID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		c.JSON(400, gin.H{"error": "Invalid order ID format"})
+		return
+	}
+
+	orderCollection := getOrderCollection()
+	var order Models.Order
+	err = orderCollection.FindOne(context.Background(), bson.M{"_id": objectID}).Decode(&order)
+	if err != nil {
+		c.JSON(404, gin.H{"error": "Order not found"})
+		return
+	}
+
+	if claims.Role == Middleware.Customer && order.UserID != claims.ID {
+		c.JSON(403, gin.H{"error": "You are not authorized to cancel this order"})
+		return
+	}
+
+	_, err = orderCollection.DeleteOne(context.Background(), bson.M{"_id": objectID})
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to cancel order"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Order cancelled successfully"})
 }

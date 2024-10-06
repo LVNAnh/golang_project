@@ -3,72 +3,71 @@ package Routes
 import (
 	"Server/Controllers"
 	"Server/Middleware"
-	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes() *mux.Router {
-	router := mux.NewRouter()
+func SetupRoutes(router *gin.Engine) {
+	api := router.Group("/api")
+	{
+		// User routes
+		api.POST("/register", Controllers.RegisterUser)
+		api.POST("/login", Controllers.LoginUser)
+		api.GET("/users", Middleware.AuthMiddleware(Middleware.Admin), Controllers.GetAllUsers)
+		api.GET("/user/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.GetUserByID)
+		api.PUT("/user/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.UpdateUser)
+		api.DELETE("/user/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.DeleteUser)
 
-	// User routes
-	router.HandleFunc("/register", Controllers.RegisterUser).Methods("POST")
-	router.HandleFunc("/login", Controllers.LoginUser).Methods("POST")
-	router.HandleFunc("/users", Controllers.GetAllUsers).Methods("GET")
-	router.HandleFunc("/user/{id}", Controllers.GetUserByID).Methods("GET")
-	router.Handle("/user/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateUser), Middleware.Admin)).Methods("PUT")
-	router.Handle("/user/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.DeleteUser), Middleware.Admin)).Methods("DELETE")
+		// ProductCategory routes
+		api.GET("/productcategories", Controllers.GetAllProductCategories)
+		api.GET("/productcategory/:id", Controllers.GetProductCategoryByID)
+		api.POST("/productcategory", Middleware.AuthMiddleware(Middleware.Admin), Controllers.CreateProductCategory)
+		api.PUT("/productcategory/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.UpdateProductCategory)
+		api.DELETE("/productcategory/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.DeleteProductCategory)
 
-	// ProductCategory routes
-	router.HandleFunc("/productcategories", Controllers.GetAllProductCategories).Methods("GET")
-	router.HandleFunc("/productcategory/{id}", Controllers.GetProductCategoryByID).Methods("GET")
-	router.Handle("/productcategory", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateProductCategory), Middleware.Admin)).Methods("POST")
-	router.Handle("/productcategory/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateProductCategory), Middleware.Admin)).Methods("PUT")
-	router.Handle("/productcategory/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.DeleteProductCategory), Middleware.Admin)).Methods("DELETE")
+		// Product routes
+		api.GET("/products", Controllers.GetAllProducts)
+		api.GET("/product/:id", Controllers.GetProductByID)
+		api.POST("/product", Middleware.AuthMiddleware(Middleware.Staff), Controllers.CreateProduct)
+		api.PUT("/product/:id", Middleware.AuthMiddleware(Middleware.Staff), Controllers.UpdateProduct)
+		api.DELETE("/product/:id", Middleware.AuthMiddleware(Middleware.Staff), Controllers.DeleteProduct)
 
-	// Product routes
-	router.HandleFunc("/products", Controllers.GetAllProducts).Methods("GET")
-	router.HandleFunc("/product/{id}", Controllers.GetProductByID).Methods("GET")
-	router.Handle("/product", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateProduct), Middleware.Staff)).Methods("POST")
-	router.Handle("/product/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateProduct), Middleware.Staff)).Methods("PUT")
-	router.Handle("/product/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.DeleteProduct), Middleware.Staff)).Methods("DELETE")
+		// ServiceCategory routes
+		api.GET("/servicecategories", Controllers.GetAllServiceCategories)
+		api.GET("/servicecategory/:id", Controllers.GetServiceCategoryByID)
+		api.POST("/servicecategory", Middleware.AuthMiddleware(Middleware.Admin), Controllers.CreateServiceCategory)
+		api.PUT("/servicecategory/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.UpdateServiceCategory)
+		api.DELETE("/servicecategory/:id", Middleware.AuthMiddleware(Middleware.Admin), Controllers.DeleteServiceCategory)
 
-	// ServiceCategory routes
-	router.HandleFunc("/servicecategories", Controllers.GetAllServiceCategories).Methods("GET")
-	router.HandleFunc("/servicecategory/{id}", Controllers.GetServiceCategoryByID).Methods("GET")
-	router.Handle("/servicecategory", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateServiceCategory), Middleware.Admin)).Methods("POST")
-	router.Handle("/servicecategory/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateServiceCategory), Middleware.Admin)).Methods("PUT")
-	router.Handle("/servicecategory/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.DeleteServiceCategory), Middleware.Admin)).Methods("DELETE")
+		// Service routes
+		api.GET("/services", Controllers.GetAllServices)
+		api.GET("/service/:id", Controllers.GetServiceByID)
+		api.POST("/service", Middleware.AuthMiddleware(Middleware.Staff), Controllers.CreateService)
+		api.PUT("/service/:id", Middleware.AuthMiddleware(Middleware.Staff), Controllers.UpdateService)
+		api.DELETE("/service/:id", Middleware.AuthMiddleware(Middleware.Staff), Controllers.DeleteService)
 
-	// Service routes
-	router.HandleFunc("/services", Controllers.GetAllServices).Methods("GET")
-	router.HandleFunc("/service/{id}", Controllers.GetServiceByID).Methods("GET")
-	router.Handle("/service", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateService), Middleware.Staff)).Methods("POST")
-	router.Handle("/service/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateService), Middleware.Staff)).Methods("PUT")
-	router.Handle("/service/{id}", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.DeleteService), Middleware.Staff)).Methods("DELETE")
+		// Cart routes
+		api.GET("/cart", Middleware.AuthMiddleware(Middleware.Customer), Controllers.GetCart)
+		api.POST("/cart/add", Middleware.AuthMiddleware(Middleware.Customer), Controllers.AddToCart)
+		api.DELETE("/cart/remove", Middleware.AuthMiddleware(Middleware.Customer), Controllers.RemoveFromCart)
+		api.POST("/cart/update", Middleware.AuthMiddleware(Middleware.Customer), Controllers.UpdateCart)
 
-	// Cart routes
-	router.Handle("/cart", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetCart), Middleware.Customer)).Methods("GET")
-	router.Handle("/cart/add", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddToCart), Middleware.Customer)).Methods("POST")
-	router.Handle("/cart/remove", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.RemoveFromCart), Middleware.Customer)).Methods("DELETE")
-	router.Handle("/cart/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateCart), Middleware.Customer)).Methods("POST")
+		// Order routes
+		api.POST("/order", Middleware.AuthMiddleware(Middleware.Customer), Controllers.CreateOrder)
+		api.GET("/orders", Middleware.AuthMiddleware(Middleware.Customer), Controllers.GetOrders)
+		api.DELETE("/order/:id", Middleware.AuthMiddleware(Middleware.Customer), Controllers.CancelOrder)
 
-	// Order routes
-	router.Handle("/order", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateOrder), Middleware.Customer)).Methods("POST")
-	router.Handle("/orders", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetOrders), Middleware.Customer)).Methods("GET")
+		// SelectedItems routes
+		api.GET("/selecteditems", Middleware.AuthMiddleware(Middleware.Customer), Controllers.GetSelectedItems)
+		api.POST("/selecteditems/add", Middleware.AuthMiddleware(Middleware.Customer), Controllers.AddToSelectedItems)
+		api.POST("/selecteditems/addMultiple", Middleware.AuthMiddleware(Middleware.Customer), Controllers.AddMultipleToSelectedItems)
+		api.DELETE("/selecteditems/remove", Middleware.AuthMiddleware(Middleware.Customer), Controllers.RemoveFromSelectedItems)
+		api.POST("/selecteditems/update", Middleware.AuthMiddleware(Middleware.Customer), Controllers.UpdateSelectedItems)
+		api.DELETE("/selecteditems/clear", Middleware.AuthMiddleware(Middleware.Customer), Controllers.ClearSelectedItems)
 
-	// SelectedItems routes
-	router.Handle("/selecteditems", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetSelectedItems), Middleware.Customer)).Methods("GET")
-	router.Handle("/selecteditems/add", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddToSelectedItems), Middleware.Customer)).Methods("POST")
-	router.Handle("/selecteditems/addMultiple", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.AddMultipleToSelectedItems), Middleware.Customer)).Methods("POST") // Route mới
-	router.Handle("/selecteditems/remove", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.RemoveFromSelectedItems), Middleware.Customer)).Methods("DELETE")
-	router.Handle("/selecteditems/update", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateSelectedItems), Middleware.Customer)).Methods("POST")
-	router.Handle("/selecteditems/clear", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.ClearSelectedItems), Middleware.Customer)).Methods("DELETE")
-
-	// OrderBookingService routes
-	router.Handle("/orderbookingservice", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.CreateOrderBookingService), Middleware.Customer)).Methods("POST")
-	router.Handle("/orderbookingservices", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.GetOrderBookingServices), Middleware.Customer)).Methods("GET")
-	router.Handle("/orderbookingservice/{id}/status", Middleware.AuthMiddleware(http.HandlerFunc(Controllers.UpdateOrderBookingServiceStatus), Middleware.Admin)).Methods("PATCH")
-
-	return router
+		// OrderBookingService routes
+		api.POST("/orderbookingservice", Middleware.AuthMiddleware(Middleware.Customer), Controllers.CreateOrderBookingService)
+		api.GET("/orderbookingservices", Middleware.AuthMiddleware(Middleware.Customer), Controllers.GetOrderBookingServices)
+		api.PATCH("/orderbookingservice/:id/status", Middleware.AuthMiddleware(Middleware.Admin), Controllers.UpdateOrderBookingServiceStatus)
+	}
 }

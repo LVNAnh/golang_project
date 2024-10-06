@@ -31,14 +31,12 @@ function AddServiceCategory() {
     severity: "success",
   });
 
-  // Lấy JWT token từ localStorage
   const token = localStorage.getItem("token");
 
-  // Fetch service categories from the server
   const fetchServiceCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/servicecategories"
+        "http://localhost:8080/api/servicecategories"
       );
       setServiceCategories(response.data);
     } catch (error) {
@@ -50,17 +48,15 @@ function AddServiceCategory() {
     fetchServiceCategories();
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Add new service category
   const handleAddCategory = async () => {
     try {
-      await axios.post("http://localhost:8080/servicecategory", formData, {
+      await axios.post("http://localhost:8080/api/servicecategory", formData, {
         headers: {
-          Authorization: `Bearer ${token}`, // Thêm token vào header
+          Authorization: `Bearer ${token}`,
         },
       });
       setSnackbar({
@@ -79,15 +75,14 @@ function AddServiceCategory() {
     }
   };
 
-  // Update existing service category
   const handleUpdateCategory = async () => {
     try {
       await axios.put(
-        `http://localhost:8080/servicecategory/${editCategoryId}`,
+        `http://localhost:8080/api/servicecategory/${editCategoryId}`,
         formData,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Thêm token vào header
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -107,7 +102,6 @@ function AddServiceCategory() {
     }
   };
 
-  // Handle submit based on mode (Add or Edit)
   const handleSubmit = (e) => {
     e.preventDefault();
     if (editMode) {
@@ -117,7 +111,6 @@ function AddServiceCategory() {
     }
   };
 
-  // Handle edit action
   const handleEdit = (category) => {
     setFormData({ name: category.name, description: category.description });
     setEditCategoryId(category.id);
@@ -131,10 +124,10 @@ function AddServiceCategory() {
     ) {
       try {
         await axios.delete(
-          `http://localhost:8080/servicecategory/${categoryId}`,
+          `http://localhost:8080/api/servicecategory/${categoryId}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`, // Thêm token vào header
+              Authorization: `Bearer ${token}`,
             },
           }
         );
@@ -154,7 +147,6 @@ function AddServiceCategory() {
     }
   };
 
-  // Reset form and close modal
   const handleCloseDialog = () => {
     setFormData({ name: "", description: "" });
     setEditMode(false);
@@ -169,24 +161,21 @@ function AddServiceCategory() {
     <div>
       <h2>Quản lý danh mục dịch vụ</h2>
 
-      {/* Button to open modal for adding a new category */}
       <Button
         variant="contained"
         color="primary"
         onClick={() => {
-          setEditMode(false); // Đặt về chế độ thêm mới
+          setEditMode(false);
           setFormData({
-            // Đặt lại form về trạng thái ban đầu
             name: "",
             description: "",
           });
-          setShowDialog(true); // Mở Dialog để thêm danh mục dịch vụ mới
+          setShowDialog(true);
         }}
       >
         Thêm danh mục dịch vụ
       </Button>
 
-      {/* Service categories table */}
       <TableContainer>
         <Table>
           <TableHead>
@@ -210,14 +199,14 @@ function AddServiceCategory() {
                     <IconButton
                       color="primary"
                       onClick={() => handleEdit(category)}
-                      disabled={!category.id} // Vô hiệu hóa nút nếu không có ID
+                      disabled={!category.id}
                     >
                       <FaEdit />
                     </IconButton>
                     <IconButton
                       color="secondary"
                       onClick={() => handleDelete(category.id)}
-                      disabled={!category.id} // Vô hiệu hóa nút nếu không có ID
+                      disabled={!category.id}
                     >
                       <FaTrash />
                     </IconButton>
@@ -235,7 +224,6 @@ function AddServiceCategory() {
         </Table>
       </TableContainer>
 
-      {/* Dialog for adding/updating a service category */}
       <Dialog open={showDialog} onClose={handleCloseDialog}>
         <DialogTitle>
           {editMode ? "Cập nhật danh mục dịch vụ" : "Thêm danh mục dịch vụ"}
@@ -272,7 +260,6 @@ function AddServiceCategory() {
         </DialogActions>
       </Dialog>
 
-      {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}

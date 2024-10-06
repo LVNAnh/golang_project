@@ -2,8 +2,6 @@ package Controllers
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -12,95 +10,68 @@ import (
 	"Server/Middleware"
 	"Server/Models"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Create a new service
-func CreateService(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func CreateService(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền tạo dịch vụ (Admin hoặc Staff)
 	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
-		http.Error(w, "You are not authorized to create services", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to create services"})
 		return
 	}
 
 	var service Models.Service
-
-	// Parse multipart form
-	err := r.ParseMultipartForm(10 << 20)
+	err := c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse multipart form"})
 		return
 	}
 
-	// Get file from form
-	file, handler, err := r.FormFile("image")
-	if err != nil {
-		http.Error(w, "Could not get file from form", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
+	file, err := c.FormFile("image")
+	if err == nil {
+		uploadPath := filepath.Join("uploads", "images")
+		os.MkdirAll(uploadPath, os.ModePerm)
 
-	// Upload path for the image
-	uploadPath := filepath.Join("uploads", "images")
-	os.MkdirAll(uploadPath, os.ModePerm)
-
-	// Save file
-	filePath := filepath.Join(uploadPath, handler.Filename)
-	tempFile, err := os.Create(filePath)
-	if err != nil {
-		http.Error(w, "Could not create file", http.StatusInternalServerError)
-		return
-	}
-	defer tempFile.Close()
-
-	_, err = io.Copy(tempFile, file)
-	if err != nil {
-		http.Error(w, "Could not save file", http.StatusInternalServerError)
-		return
+		filePath := filepath.Join(uploadPath, file.Filename)
+		err = c.SaveUploadedFile(file, filePath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save file"})
+			return
+		}
+		service.ImageURL = filepath.ToSlash(filepath.Join("uploads/images", file.Filename))
 	}
 
-	// Save image URL
-	service.ImageURL = filepath.ToSlash(filepath.Join("/uploads/images", handler.Filename))
+	service.Name = c.PostForm("name")
+	service.Price, _ = strconv.ParseFloat(c.PostForm("price"), 64)
+	service.Description = c.PostForm("description")
+	service.ServiceCategory, _ = primitive.ObjectIDFromHex(c.PostForm("servicecategory"))
 
-	// Get other form values
-	service.Name = r.FormValue("name")
-	service.Price, _ = strconv.ParseFloat(r.FormValue("price"), 64)
-	service.Description = r.FormValue("description")
-	service.ServiceCategory, _ = primitive.ObjectIDFromHex(r.FormValue("servicecategory"))
-
-	// Validate fields
 	if service.Name == "" || service.Price <= 0 {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Set ID
 	service.ID = primitive.NewObjectID()
 
-	// Insert service into the database
 	collection := getCollection("services")
 	_, err = collection.InsertOne(context.Background(), service)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(service)
+	c.JSON(http.StatusOK, service)
 }
 
-// Get all services
-func GetAllServices(w http.ResponseWriter, r *http.Request) {
+func GetAllServices(c *gin.Context) {
 	var services []Models.Service
 	collection := getCollection("services")
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 	defer cursor.Close(context.Background())
@@ -111,16 +82,13 @@ func GetAllServices(w http.ResponseWriter, r *http.Request) {
 		services = append(services, service)
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(services)
+	c.JSON(http.StatusOK, services)
 }
 
-// Get a service by ID
-func GetServiceByID(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+func GetServiceByID(c *gin.Context) {
+	id, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
@@ -128,98 +96,76 @@ func GetServiceByID(w http.ResponseWriter, r *http.Request) {
 	collection := getCollection("services")
 	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&service)
 	if err != nil {
-		http.Error(w, "Service not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(service)
+	c.JSON(http.StatusOK, service)
 }
 
-// Update a service by ID
-func UpdateService(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func UpdateService(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền cập nhật dịch vụ (Admin hoặc Staff)
 	if claims.Role != Middleware.Admin && claims.Role != Middleware.Staff {
-		http.Error(w, "You are not authorized to update services", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to update services"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+	id, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	var existingService Models.Service
 	collection := getCollection("services")
 
-	// Find the service to update
 	err = collection.FindOne(context.Background(), bson.M{"_id": id}).Decode(&existingService)
 	if err != nil {
-		http.Error(w, "Service not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
 
-	// Parse multipart form
-	err = r.ParseMultipartForm(10 << 20)
+	err = c.Request.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, "Could not parse multipart form", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Could not parse multipart form"})
 		return
 	}
 
-	// Handle file upload if present
-	file, handler, err := r.FormFile("image")
+	file, err := c.FormFile("image")
 	if err == nil {
-		defer file.Close()
-
 		uploadPath := filepath.Join("uploads", "images")
 		os.MkdirAll(uploadPath, os.ModePerm)
 
-		filePath := filepath.Join(uploadPath, handler.Filename)
-		tempFile, err := os.Create(filePath)
+		filePath := filepath.Join(uploadPath, file.Filename)
+		err = c.SaveUploadedFile(file, filePath)
 		if err != nil {
-			http.Error(w, "Could not create file", http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not save file"})
 			return
 		}
-		defer tempFile.Close()
-
-		_, err = io.Copy(tempFile, file)
-		if err != nil {
-			http.Error(w, "Could not save file", http.StatusInternalServerError)
-			return
-		}
-
-		// Update image URL
 		existingService.ImageURL = filePath
 	}
 
-	// Update fields from form
-	if name := r.FormValue("name"); name != "" {
+	if name := c.PostForm("name"); name != "" {
 		existingService.Name = name
 	}
-	if price, err := strconv.ParseFloat(r.FormValue("price"), 64); err == nil && price > 0 {
+	if price, err := strconv.ParseFloat(c.PostForm("price"), 64); err == nil && price > 0 {
 		existingService.Price = price
 	}
-	if description := r.FormValue("description"); description != "" {
+	if description := c.PostForm("description"); description != "" {
 		existingService.Description = description
 	}
-	if category := r.FormValue("servicecategory"); category != "" {
+	if category := c.PostForm("servicecategory"); category != "" {
 		if serviceCategory, err := primitive.ObjectIDFromHex(category); err == nil {
 			existingService.ServiceCategory = serviceCategory
 		}
 	}
 
-	// Validate fields
 	if existingService.Name == "" || existingService.Price <= 0 {
-		http.Error(w, "Invalid input", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Update in database
 	update := bson.M{
 		"$set": bson.M{
 			"name":            existingService.Name,
@@ -232,48 +178,43 @@ func UpdateService(w http.ResponseWriter, r *http.Request) {
 
 	result, err := collection.UpdateOne(context.Background(), bson.M{"_id": id}, update)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if result.MatchedCount == 0 {
-		http.Error(w, "Service not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(existingService)
+	c.JSON(http.StatusOK, existingService)
 }
 
-// Delete a service by ID
-func DeleteService(w http.ResponseWriter, r *http.Request) {
-	// Lấy claims từ context để kiểm tra quyền
-	claims := r.Context().Value("user").(*Middleware.UserClaims)
+func DeleteService(c *gin.Context) {
+	claims := c.MustGet("user").(*Middleware.UserClaims)
 
-	// Kiểm tra xem người dùng có quyền xóa dịch vụ (chỉ cho Admin)
 	if claims.Role != Middleware.Admin {
-		http.Error(w, "You are not authorized to delete services", http.StatusForbidden)
+		c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to delete services"})
 		return
 	}
 
-	params := mux.Vars(r)
-	id, err := primitive.ObjectIDFromHex(params["id"])
+	id, err := primitive.ObjectIDFromHex(c.Param("id"))
 	if err != nil {
-		http.Error(w, "Invalid ID format", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID format"})
 		return
 	}
 
 	collection := getCollection("services")
 	result, err := collection.DeleteOne(context.Background(), bson.M{"_id": id})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	if result.DeletedCount == 0 {
-		http.Error(w, "Service not found", http.StatusNotFound)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Service not found"})
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	c.Status(http.StatusNoContent)
 }

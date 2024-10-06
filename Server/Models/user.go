@@ -43,7 +43,6 @@ type CartItem struct {
 	ImageURL  string             `bson:"-" json:"imageurl,omitempty"`
 }
 
-// Struct cho SelectedItems (Danh sách các sản phẩm đã được chọn)
 type SelectedItems struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID    primitive.ObjectID `bson:"user_id,omitempty" json:"user_id,omitempty"`
@@ -52,7 +51,6 @@ type SelectedItems struct {
 	UpdatedAt time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 }
 
-// Struct cho từng sản phẩm đã được chọn trong SelectedItems
 type SelectedItem struct {
 	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"`
 	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`
@@ -61,7 +59,6 @@ type SelectedItem struct {
 	ImageURL  string             `bson:"imageurl,omitempty" json:"imageurl,omitempty"`
 }
 
-// Struct cho Order
 type Order struct {
 	ID         primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
 	UserID     primitive.ObjectID `bson:"user_id,omitempty" json:"user_id,omitempty"`
@@ -71,7 +68,6 @@ type Order struct {
 	UpdatedAt  time.Time          `bson:"updated_at,omitempty" json:"updated_at,omitempty"`
 }
 
-// Struct cho OrderItem
 type OrderItem struct {
 	ProductID primitive.ObjectID `bson:"product_id,omitempty" json:"product_id,omitempty"`
 	Quantity  int                `bson:"quantity,omitempty" json:"quantity,omitempty"`

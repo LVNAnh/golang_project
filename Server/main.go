@@ -10,20 +10,18 @@ import (
 	"Server/Controllers"
 	"Server/Routes"
 
-	"github.com/rs/cors"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client := &mongo.Client{}
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var err error
-	client, err = mongo.Connect(ctx, clientOptions)
+	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,24 +32,24 @@ func main() {
 	}
 
 	database := client.Database("golang_project")
-
 	Controllers.Database = database
 
-	router := Routes.SetupRoutes()
+	router := gin.Default()
 
-	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
-
-	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:6969"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "X-Requested-With"},
-		ExposedHeaders:   []string{"Authorization"},
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:6969"},
+		AllowMethods:     []string{"POST", "GET", "PUT", "PATCH", "DELETE"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Authorization"},
 		AllowCredentials: true,
-		MaxAge:           3600,
-	}).Handler(router)
+		MaxAge:           12 * time.Hour,
+	}))
+
+	Routes.SetupRoutes(router)
+
+	router.StaticFS("/uploads", http.Dir("./uploads"))
 
 	port := "8080"
-
-	fmt.Printf("Chương trình đang hoạt động tại localhost:%s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, corsHandler))
+	fmt.Printf("Server running at http://localhost:%s\n", port)
+	log.Fatal(router.Run(":" + port))
 }

@@ -66,7 +66,9 @@ function AdminMenu() {
         <MenuItem component={Link} to="/add-service">
           Quản lý dịch vụ
         </MenuItem>
-        <MenuItem component={Link} to="/order-booking-service-history">Quản lý lịch sử đơn hàng dịch vụ</MenuItem>
+        <MenuItem component={Link} to="/order-booking-service-history">
+          Quản lý lịch sử đơn hàng dịch vụ
+        </MenuItem>
       </Menu>
     </div>
   );
@@ -91,7 +93,7 @@ function AppContent() {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const response = await axios.get("http://localhost:8080/cart", {
+        const response = await axios.get("http://localhost:8080/api/cart", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const cartItems = response.data.items || [];

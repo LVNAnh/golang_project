@@ -45,7 +45,7 @@ function ServiceBooking() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/services");
+        const response = await axios.get("http://localhost:8080/api/services");
         setServices(response.data);
       } catch (error) {
         console.error("Error fetching services", error);
@@ -57,7 +57,7 @@ function ServiceBooking() {
 
   const handleDistrictChange = (event) => {
     setSelectedDistrict(event.target.value);
-    setSelectedWard(""); 
+    setSelectedWard("");
   };
 
   const handleBooking = (service) => {
@@ -94,7 +94,6 @@ function ServiceBooking() {
       return;
     }
 
-
     try {
       const bookingData = {
         service_id: selectedService.id,
@@ -106,11 +105,11 @@ function ServiceBooking() {
       };
 
       const response = await axios.post(
-        "http://localhost:8080/orderbookingservice",
+        "http://localhost:8080/api/orderbookingservice",
         bookingData,
         {
           headers: {
-            Authorization: token, 
+            Authorization: token,
           },
         }
       );
@@ -146,13 +145,13 @@ function ServiceBooking() {
                     objectFit: "cover",
                     width: "100%",
                     height: "250px",
-                    cursor: "pointer", 
+                    cursor: "pointer",
                   }}
                   onClick={() =>
                     handleClickImage(
                       `http://localhost:8080/${service.imageurl}`
                     )
-                  } 
+                  }
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="div">

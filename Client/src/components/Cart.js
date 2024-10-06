@@ -29,18 +29,16 @@ function Cart({ updateCartCount, setCartCount }) {
   const [allSelected, setAllSelected] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch cart items
   const fetchCartItems = useCallback(async () => {
     try {
-      const response = await axios.get("http://localhost:8080/cart", {
+      const response = await axios.get("http://localhost:8080/api/cart", {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
       setCartItems(response.data.items || []);
       updateCartCount();
 
-      // Fetch selected items to pre-check the checkboxes
       const selectedResponse = await axios.get(
-        "http://localhost:8080/selecteditems",
+        "http://localhost:8080/api/selecteditems",
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
@@ -54,7 +52,6 @@ function Cart({ updateCartCount, setCartCount }) {
     }
   }, [updateCartCount]);
 
-  // Load stored selectedItems from localStorage when the page loads
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -68,7 +65,6 @@ function Cart({ updateCartCount, setCartCount }) {
     }
   }, []);
 
-  // Save selectedItems to localStorage whenever it changes
   useEffect(() => {
     setAllSelected(
       selectedItems.length === cartItems.length && cartItems.length > 0
@@ -77,12 +73,15 @@ function Cart({ updateCartCount, setCartCount }) {
 
   const handleRemoveItem = async () => {
     try {
-      const response = await axios.delete("http://localhost:8080/cart/remove", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        data: { product_id: itemToDelete.product_id },
-      });
+      const response = await axios.delete(
+        "http://localhost:8080/api/cart/remove",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          data: { product_id: itemToDelete.product_id },
+        }
+      );
 
       if (response.status === 200) {
         const updatedCartItems = cartItems.filter(
@@ -117,9 +116,8 @@ function Cart({ updateCartCount, setCartCount }) {
       return;
     }
     try {
-      // Cập nhật số lượng sản phẩm trong giỏ hàng (Cart)
       const response = await axios.post(
-        "http://localhost:8080/cart/update",
+        "http://localhost:8080/api/cart/update",
         { product_id: productId, quantity },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
@@ -127,7 +125,7 @@ function Cart({ updateCartCount, setCartCount }) {
       );
 
       if (response.status === 200) {
-        fetchCartItems(); // Refresh cart items
+        fetchCartItems();
         setSnackbar({
           open: true,
           message: "Số lượng sản phẩm đã được cập nhật",
@@ -135,10 +133,9 @@ function Cart({ updateCartCount, setCartCount }) {
         });
         updateCartCount();
 
-        // Nếu sản phẩm đã có trong selectedItems, cập nhật số lượng trong selectedItems
         if (selectedItems.includes(productId)) {
           await axios.post(
-            "http://localhost:8080/selecteditems/update",
+            "http://localhost:8080/api/selecteditems/update",
             { product_id: productId, quantity },
             {
               headers: {
@@ -160,17 +157,15 @@ function Cart({ updateCartCount, setCartCount }) {
 
   const handleSelectAll = async () => {
     if (allSelected) {
-      // Deselect all: Xóa tất cả sản phẩm đã chọn trong selected_items
       try {
-        await axios.delete("http://localhost:8080/selecteditems/clear", {
+        await axios.delete("http://localhost:8080/api/selecteditems/clear", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
-        setSelectedItems([]); // Cập nhật lại danh sách sản phẩm đã chọn trên frontend
+        setSelectedItems([]);
       } catch (error) {
         console.error("Error clearing selected items", error);
       }
     } else {
-      // Select all: Thêm tất cả sản phẩm vào selected_items
       const selectedProducts = cartItems.map((item) => ({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -181,7 +176,7 @@ function Cart({ updateCartCount, setCartCount }) {
 
       try {
         await axios.post(
-          "http://localhost:8080/selecteditems/addMultiple",
+          "http://localhost:8080/api/selecteditems/addMultiple",
           selectedProducts,
           {
             headers: {
@@ -190,42 +185,40 @@ function Cart({ updateCartCount, setCartCount }) {
           }
         );
         const allProductIds = cartItems.map((item) => item.product_id);
-        setSelectedItems(allProductIds); // Cập nhật lại danh sách sản phẩm đã chọn trên frontend
+        setSelectedItems(allProductIds);
       } catch (error) {
         console.error("Error adding multiple selected items", error);
       }
     }
-    setAllSelected(!allSelected); // Cập nhật trạng thái "Chọn tất cả" hoặc "Bỏ chọn tất cả"
+    setAllSelected(!allSelected);
   };
 
   const handleCheckboxChange = async (productId) => {
     let newSelectedItems;
 
     if (selectedItems.includes(productId)) {
-      // Uncheck - remove from selectedItems
       newSelectedItems = selectedItems.filter((id) => id !== productId);
       try {
-        await axios.delete("http://localhost:8080/selecteditems/remove", {
+        await axios.delete("http://localhost:8080/api/selecteditems/remove", {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-          data: { product_id: productId }, // Sử dụng phương thức DELETE với body
+          data: { product_id: productId },
         });
       } catch (error) {
         console.error("Error removing selected item", error);
       }
     } else {
-      // Check - add to selectedItems
       newSelectedItems = [...selectedItems, productId];
       const selectedProduct = cartItems.find(
         (item) => item.product_id === productId
       );
       try {
         await axios.post(
-          "http://localhost:8080/selecteditems/add",
+          "http://localhost:8080/api/selecteditems/add",
           {
             product_id: productId,
             quantity: selectedProduct.quantity,
             price: selectedProduct.price,
-            name: selectedProduct.name, // ensure name and imageurl are added
+            name: selectedProduct.name,
             imageurl: selectedProduct.imageurl,
           },
           {
@@ -251,9 +244,12 @@ function Cart({ updateCartCount, setCartCount }) {
 
   const handleProceedToOrder = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/selecteditems", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
+      const response = await axios.get(
+        "http://localhost:8080/api/selecteditems",
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
 
       const selectedProducts = response.data.items;
       if (selectedProducts.length > 0) {

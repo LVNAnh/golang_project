@@ -1,17 +1,16 @@
 package Middleware
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// Lấy JWT_SECRET từ biến môi trường hoặc gán thủ công nếu cần
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 type Role int
@@ -22,55 +21,48 @@ const (
 	Customer
 )
 
-// UserClaims struct để lưu thông tin người dùng vào JWT token
 type UserClaims struct {
 	ID   primitive.ObjectID `json:"id"`
 	Role Role               `json:"role"`
 	jwt.StandardClaims
 }
 
-// Middleware kiểm tra JWT token
-func AuthMiddleware(next http.Handler, requiredRole Role) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Lấy JWT token từ header Authorization
-		authHeader := r.Header.Get("Authorization")
+func AuthMiddleware(requiredRole Role) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header missing"})
+			c.Abort()
 			return
 		}
 
-		// Format header: "Bearer <token>"
 		tokenString := strings.TrimSpace(strings.Replace(authHeader, "Bearer", "", 1))
 
-		// Kiểm tra token có hợp lệ không
 		claims := &UserClaims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
 
 		if err != nil || !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
 			return
 		}
 
-		// Kiểm tra quyền (role) của người dùng
 		if claims.Role > requiredRole {
-			http.Error(w, "You do not have permission to access this resource", http.StatusForbidden)
+			c.JSON(http.StatusForbidden, gin.H{"error": "You do not have permission to access this resource"})
+			c.Abort()
 			return
 		}
 
-		// Đặt thông tin người dùng vào context để có thể truy xuất sau này
-		ctx := context.WithValue(r.Context(), "user", claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+		c.Set("user", claims)
+		c.Next()
+	}
 }
 
-// GenerateJWT tạo JWT token cho người dùng sau khi đăng nhập thành công
 func GenerateJWT(userID primitive.ObjectID, role Role) (string, error) {
-	// Thời gian hết hạn của token, ở đây là 24 giờ
 	expirationTime := time.Now().Add(24 * time.Hour)
 
-	// Tạo claims chứa thông tin người dùng
 	claims := &UserClaims{
 		ID:   userID,
 		Role: role,
@@ -79,10 +71,8 @@ func GenerateJWT(userID primitive.ObjectID, role Role) (string, error) {
 		},
 	}
 
-	// Tạo token với phương thức ký là HS256
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Ký token bằng jwtSecret
 	tokenString, err := token.SignedString(jwtSecret)
 	if err != nil {
 		return "", err

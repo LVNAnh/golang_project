@@ -9,6 +9,6 @@ type Service struct {
 	Name            string             `bson:"name" json:"name"`
 	Price           float64            `bson:"price" json:"price"`
 	Description     string             `bson:"description" json:"description"`
-	ServiceCategory primitive.ObjectID `bson:"servicecategory" json:"servicecategory"` // Reference to ServiceCategory
-	ImageURL        string             `bson:"imageurl" json:"imageurl"`               // Store image URL or path
+	ServiceCategory primitive.ObjectID `bson:"servicecategory" json:"servicecategory"`
+	ImageURL        string             `bson:"imageurl" json:"imageurl"`
 }

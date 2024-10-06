@@ -52,13 +52,13 @@ function AddService() {
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredServices, setFilteredServices] = useState([]);
 
-  const token = localStorage.getItem("token"); // Lấy token từ localStorage
+  const token = localStorage.getItem("token");
 
   const fetchServices = async () => {
     try {
-      const response = await axios.get("http://localhost:8080/services", {
+      const response = await axios.get("http://localhost:8080/api/services", {
         headers: {
-          Authorization: `Bearer ${token}`, // Gửi kèm token
+          Authorization: `Bearer ${token}`,
         },
       });
       setServices(response.data || []);
@@ -71,10 +71,10 @@ function AddService() {
   const fetchServiceCategories = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8080/servicecategories",
+        "http://localhost:8080/api/servicecategories",
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Gửi kèm token
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -148,9 +148,9 @@ function AddService() {
     }
 
     try {
-      await axios.post("http://localhost:8080/service", formDataToSend, {
+      await axios.post("http://localhost:8080/api/service", formDataToSend, {
         headers: {
-          Authorization: `Bearer ${token}`, // Gửi kèm token
+          Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
@@ -186,11 +186,11 @@ function AddService() {
 
     try {
       await axios.put(
-        `http://localhost:8080/service/${editServiceId}`,
+        `http://localhost:8080/api/service/${editServiceId}`,
         formDataToSend,
         {
           headers: {
-            Authorization: `Bearer ${token}`, // Gửi kèm token
+            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
         }
@@ -218,11 +218,14 @@ function AddService() {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8080/service/${deleteServiceId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Gửi kèm token
-        },
-      });
+      await axios.delete(
+        `http://localhost:8080/api/service/${deleteServiceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setSnackbar({
         open: true,
         message: "Dịch vụ đã được xóa!",
@@ -296,21 +299,19 @@ function AddService() {
     <div>
       <h2>Quản lý dịch vụ</h2>
 
-      {/* Thêm button để mở Dialog thêm dịch vụ */}
       <Button
         variant="contained"
         color="primary"
         onClick={() => {
-          setEditMode(false); // Đặt về chế độ Thêm (không phải Chỉnh sửa)
+          setEditMode(false);
           setFormData({
-            // Đặt lại form về trạng thái ban đầu
             name: "",
             price: "",
             description: "",
             servicecategory: "",
             image: null,
           });
-          setShowDialog(true); // Hiển thị Dialog để thêm dịch vụ mới
+          setShowDialog(true);
         }}
         style={{ marginBottom: "20px" }}
       >
@@ -363,7 +364,6 @@ function AddService() {
           <TableBody>
             {displayedServices && displayedServices.length > 0 ? (
               displayedServices.map((service, index) => {
-                // Kiểm tra nếu serviceCategories là một mảng hợp lệ
                 const category =
                   serviceCategories && serviceCategories.length > 0
                     ? serviceCategories.find(
