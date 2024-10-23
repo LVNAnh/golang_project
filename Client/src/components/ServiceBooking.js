@@ -139,7 +139,7 @@ function ServiceBooking() {
                 <CardMedia
                   component="img"
                   height="250"
-                  image={`http://localhost:8080/${service.imageurl}`}
+                  image={service.imageurl}
                   alt={service.name}
                   sx={{
                     objectFit: "cover",
@@ -147,11 +147,7 @@ function ServiceBooking() {
                     height: "250px",
                     cursor: "pointer",
                   }}
-                  onClick={() =>
-                    handleClickImage(
-                      `http://localhost:8080/${service.imageurl}`
-                    )
-                  }
+                  onClick={() => handleClickImage(service.imageurl)}
                 />
                 <CardContent>
                   <Typography gutterBottom variant="h5" component="div">

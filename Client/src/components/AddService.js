@@ -385,7 +385,7 @@ function AddService() {
                     <TableCell>
                       {service.imageurl ? (
                         <img
-                          src={`http://localhost:8080/${service.imageurl}`}
+                          src={service.imageurl}
                           alt={service.name}
                           width="50"
                         />

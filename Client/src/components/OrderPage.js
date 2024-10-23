@@ -158,7 +158,7 @@ function OrderPage() {
                     style={{ textAlign: "center", border: "1px solid black" }}
                   >
                     <img
-                      src={`http://localhost:8080/${item.imageurl}`}
+                      src={item.imageurl}
                       alt={item.name}
                       style={{ width: "70px", height: "70px" }}
                     />

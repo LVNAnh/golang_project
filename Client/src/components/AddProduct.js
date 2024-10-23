@@ -367,7 +367,7 @@ function AddProduct() {
                   <TableCell>
                     {product.imageurl ? (
                       <img
-                        src={`http://localhost:8080/${product.imageurl}`}
+                        src={product.imageurl}
                         alt={product.name}
                         width="50"
                       />

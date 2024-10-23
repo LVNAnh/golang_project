@@ -332,7 +332,7 @@ function Cart({ updateCartCount, setCartCount }) {
                     }}
                   >
                     <img
-                      src={`http://localhost:8080/${item.imageurl}`}
+                      src={item.imageurl}
                       alt={item.name}
                       style={{ width: "70px", height: "70px" }}
                     />

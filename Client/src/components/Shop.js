@@ -100,7 +100,7 @@ function Shop({ updateCartCount }) {
                 <CardMedia
                   component="img"
                   height="250"
-                  image={`http://localhost:8080/${product.imageurl}`}
+                  image={product.imageurl}
                   alt={product.name}
                   sx={{
                     objectFit: "cover",
@@ -108,11 +108,7 @@ function Shop({ updateCartCount }) {
                     height: "250px",
                     cursor: "pointer",
                   }}
-                  onClick={() =>
-                    handleClickImage(
-                      `http://localhost:8080/${product.imageurl}`
-                    )
-                  }
+                  onClick={() => handleClickImage(product.imageurl)}
                 />
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Typography gutterBottom variant="h5" component="div">
