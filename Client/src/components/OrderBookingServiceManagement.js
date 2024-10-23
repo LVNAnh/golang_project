@@ -27,7 +27,7 @@ function OrderBookingServiceManagement() {
   const fetchServices = async () => {
     try {
       const response = await axios.get("http://localhost:8080/api/services");
-      setServices(response.data);
+      setServices(response.data || []);
     } catch (error) {
       console.error("Error fetching services:", error);
     }
@@ -42,7 +42,7 @@ function OrderBookingServiceManagement() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setOrders(response.data);
+      setOrders(response.data || []);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching order bookings:", error);
@@ -90,6 +90,7 @@ function OrderBookingServiceManagement() {
               <TableCell>Số lượng</TableCell>
               <TableCell>Tổng giá</TableCell>
               <TableCell>Ngày đặt</TableCell>
+              <TableCell>Địa chỉ</TableCell>
               <TableCell>Trạng thái</TableCell>
             </TableRow>
           </TableHead>
@@ -97,12 +98,13 @@ function OrderBookingServiceManagement() {
             {orders.map((order, index) => (
               <TableRow key={order.id}>
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{getServiceName(order.service_id)}</TableCell>{" "}
+                <TableCell>{getServiceName(order.service_id)}</TableCell>
                 <TableCell>{order.quantity}</TableCell>
                 <TableCell>{order.total_price}</TableCell>
                 <TableCell>
                   {new Date(order.booking_date).toLocaleDateString()}
                 </TableCell>
+                <TableCell>{order.address}</TableCell>
                 <TableCell>
                   <Select
                     value={order.status}

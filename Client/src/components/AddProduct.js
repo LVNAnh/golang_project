@@ -46,7 +46,6 @@ function AddProduct() {
   });
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [deleteProductId, setDeleteProductId] = useState(null);
-
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortOrder, setSortOrder] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -55,9 +54,10 @@ function AddProduct() {
   const fetchProducts = async () => {
     try {
       const response = await axios.get("http://localhost:8080/api/products");
-      setProducts(response.data);
+      setProducts(response.data || []);
     } catch (error) {
       console.error("Error fetching products:", error);
+      setProducts([]);
     }
   };
 
@@ -97,7 +97,7 @@ function AddProduct() {
       filtered = filtered.sort((a, b) => b.price - a.price);
     }
 
-    setFilteredProducts(filtered);
+    setFilteredProducts(filtered || []);
   };
 
   const handlePageChange = (event, value) => {
@@ -111,9 +111,7 @@ function AddProduct() {
     currentPage * PRODUCTS_PER_PAGE
   );
 
-  const getToken = () => {
-    return localStorage.getItem("token");
-  };
+  const getToken = () => localStorage.getItem("token");
 
   const handleAddProduct = async () => {
     if (
@@ -159,10 +157,6 @@ function AddProduct() {
         message: "Có lỗi xảy ra khi thêm sản phẩm.",
         severity: "error",
       });
-      console.error(
-        "Error adding product:",
-        error.response ? error.response.data : error.message
-      );
     }
   };
 
@@ -458,7 +452,8 @@ function AddProduct() {
             onChange={handleChange}
             fullWidth
           >
-            {productCategories && productCategories.length > 0 ? (
+            {Array.isArray(productCategories) &&
+            productCategories.length > 0 ? (
               productCategories.map((category) => (
                 <MenuItem key={category.id} value={category.id}>
                   {category.name}
@@ -466,7 +461,7 @@ function AddProduct() {
               ))
             ) : (
               <MenuItem value="" disabled>
-                Không có danh mục
+                Phải có ít nhất 1 danh mục sản phẩm
               </MenuItem>
             )}
           </Select>
